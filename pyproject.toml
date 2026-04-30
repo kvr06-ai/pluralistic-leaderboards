@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pluralistic-leaderboards"
+version = "0.1.0"
+description = "Independent reference implementation of Haghtalab, Procaccia, Shao, Wang & Yang (Jan 2026), Pluralistic Leaderboards"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "Kaushik Rajan"}]
+keywords = ["social-choice", "committee-selection", "local-stability", "lmarena", "bradley-terry", "leaderboard"]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+  "datasets>=2.14",
+  "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pyarrow>=14"]
+
+[project.urls]
+"Paper" = "https://procaccia.info/wp-content/uploads/2026/01/leaderboard.pdf"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pluralistic_leaderboards*"]
+exclude = ["tests*", "notebooks*", "results*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra -q"
