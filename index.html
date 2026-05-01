@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pluralistic Leaderboards Explorer</title>
+<meta name="description" content="Interactive comparison of Bradley-Terry vs Algorithms 2 & 3 from Pluralistic Leaderboards (Haghtalab, Procaccia, Shao, Wang, Yang, Jan 2026) on LMArena 140k preference data.">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+:root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface-alt: #0f3460;
+    --text: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --text-muted: #707080;
+    --accent: #e94560;
+    --accent-dim: #c73e54;
+    --link: #53a8b6;
+    --border: #2a2a4a;
+    --code-bg: #0d1b2a;
+    --bt-color: #a0a0b0;
+    --a2-color: #f5a96b;
+    --a3-color: #6bd5a3;
+    --threshold: #e94560;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    font-size: 15px;
+}
+header { margin-bottom: 2rem; }
+h1 {
+    font-size: 1.85rem;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+.attribution {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+.attribution a { color: var(--link); text-decoration: none; }
+.attribution a:hover { text-decoration: underline; }
+
+.config-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+}
+.config-cell {
+    display: flex;
+    flex-direction: column;
+}
+.config-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.2rem;
+}
+.config-value {
+    font-size: 1rem;
+    color: var(--text);
+    font-weight: 600;
+    font-family: 'SF Mono', 'Menlo', monospace;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.control-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-right: 0.5rem;
+}
+.control-label code {
+    background: var(--code-bg);
+    color: var(--link);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 0.85rem;
+}
+.phi-selector { display: flex; gap: 0.4rem; }
+.phi-btn {
+    background: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+    font-weight: 500;
+}
+.phi-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+.phi-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+.phi-tooltip {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    border-left: 4px solid var(--bt-color);
+}
+.metric-card.a2 { border-left-color: var(--a2-color); }
+.metric-card.a3 { border-left-color: var(--a3-color); }
+.metric-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.algo-tag {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+    font-weight: 700;
+    color: var(--bg);
+}
+.algo-tag.bt { background: var(--bt-color); }
+.algo-tag.a2 { background: var(--a2-color); }
+.algo-tag.a3 { background: var(--a3-color); }
+.metric-value {
+    font-size: 1.7rem;
+    color: var(--text);
+    font-weight: 700;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    margin-bottom: 0.2rem;
+}
+.metric-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+.metric-detail.warn { color: var(--accent); }
+.metric-detail.good { color: var(--a3-color); }
+
+section { margin-bottom: 2.5rem; }
+h2 {
+    font-size: 1.15rem;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+h2 .h2-sub {
+    color: var(--text-secondary);
+    font-weight: 400;
+    font-size: 0.85rem;
+    margin-left: 0.4rem;
+}
+.section-help {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.55;
+}
+
+.chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    height: 380px;
+    position: relative;
+}
+
+.rankings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+.ranking-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+}
+.ranking-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+}
+.ranking-title {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ranking-runtime {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Menlo', monospace;
+}
+.ranking-list {
+    list-style: none;
+    counter-reset: rank;
+    font-size: 0.82rem;
+}
+.ranking-list li {
+    counter-increment: rank;
+    padding: 0.35rem 0.5rem;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.15rem;
+}
+.ranking-list li::before {
+    content: counter(rank);
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    flex-shrink: 0;
+}
+.ranking-list li.delta-up::before { background: rgba(107, 213, 163, 0.25); color: var(--a3-color); }
+.ranking-list li.delta-down::before { background: rgba(245, 169, 107, 0.25); color: var(--a2-color); }
+.ranking-list li.delta-same::before { background: var(--surface-alt); color: var(--text-secondary); }
+.model-name {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+.delta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-weight: 600;
+}
+.delta.up { color: var(--a3-color); }
+.delta.down { color: var(--a2-color); }
+
+.cat-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.85rem;
+}
+.cat-row {
+    display: grid;
+    grid-template-columns: 220px 1fr 200px;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    gap: 1rem;
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-row.head {
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1rem;
+}
+.cat-name { font-family: 'SF Mono', 'Menlo', monospace; font-size: 0.78rem; }
+.cat-bar-wrap { display: flex; align-items: center; gap: 0.6rem; }
+.cat-bar {
+    background: var(--bg);
+    height: 8px;
+    border-radius: 2px;
+    overflow: hidden;
+    flex: 1;
+}
+.cat-bar-fill {
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    height: 100%;
+    transition: width 0.3s ease;
+}
+.cat-weight {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    width: 50px;
+    text-align: right;
+}
+.cat-top-model {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.7;
+}
+footer a { color: var(--link); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+    .rankings-grid { grid-template-columns: 1fr; }
+    .cat-row { grid-template-columns: 1fr; gap: 0.4rem; }
+    .cat-row.head { display: none; }
+    .cat-bar-wrap { width: 100%; }
+}
+@media (max-width: 600px) {
+    body { padding: 1rem 0.75rem; font-size: 14px; }
+    h1 { font-size: 1.4rem; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .chart-wrap { height: 280px; padding: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Pluralistic Leaderboards Explorer</h1>
+<p class="subtitle">Interactive comparison of Bradley-Terry vs Algorithms 2 &amp; 3 on LMArena 140k preference data</p>
+<p class="attribution">
+Independent reference implementation of <em>Pluralistic Leaderboards</em> by
+<a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/nika.html">Haghtalab</a>,
+<a href="https://procaccia.info">Procaccia</a>, Shao,
+<a href="https://serenalwang.com/">Wang</a>, and Yang (January 2026).
+<a href="https://procaccia.info/wp-content/uploads/2026/01/leaderboard.pdf">[paper]</a>
+&middot;
+<a href="https://github.com/kvr06-ai/pluralistic-leaderboards">[github]</a>
+&middot;
+Apache-2.0 &middot; Not officially affiliated with the paper authors.
+</p>
+</header>
+
+<div class="config-bar">
+    <div class="config-cell">
+        <span class="config-label">Battles</span>
+        <span class="config-value" id="cfg-battles">—</span>
+    </div>
+    <div class="config-cell">
+        <span class="config-label">Models</span>
+        <span class="config-value" id="cfg-models">—</span>
+    </div>
+    <div class="config-cell">
+        <span class="config-label">Categories</span>
+        <span class="config-value" id="cfg-categories">—</span>
+    </div>
+    <div class="config-cell">
+        <span class="config-label">Eval users</span>
+        <span class="config-value" id="cfg-evalusers">—</span>
+    </div>
+    <div class="config-cell">
+        <span class="config-label">Epsilon</span>
+        <span class="config-value" id="cfg-epsilon">—</span>
+    </div>
+    <div class="config-cell">
+        <span class="config-label">Seed</span>
+        <span class="config-value" id="cfg-seed">—</span>
+    </div>
+    <div class="config-cell">
+        <span class="config-label">Runtime</span>
+        <span class="config-value" id="cfg-runtime">—</span>
+    </div>
+</div>
+
+<div class="controls">
+    <span class="control-label">Mallows dispersion <code>&phi;</code>:</span>
+    <div class="phi-selector" id="phi-selector"></div>
+    <span class="phi-tooltip" id="phi-tooltip">Lower &phi; = cohesive sub-populations &middot; Higher &phi; = high-noise mixture</span>
+</div>
+
+<section>
+<h2>Headline metrics <span class="h2-sub">— max &gamma;&#770; over all prefix sizes <em>k</em></span></h2>
+<p class="section-help">A committee is locally stable when &gamma;&#770; &le; 1. Lower max &gamma;&#770; = aggregation rule respects minority sub-populations more reliably. Algorithm 3 should dominate Bradley-Terry at low &phi; (the regime where pluralism matters most).</p>
+<div class="metrics-grid" id="metrics-grid"></div>
+</section>
+
+<section>
+<h2>Stability curves <span class="h2-sub">— &gamma;&#770; vs prefix size <em>k</em></span></h2>
+<p class="section-help">Each line plots &gamma;&#770; for prefix sizes <em>k</em> = 1 through 19. The horizontal threshold at &gamma;&#770; = 1 is the local-stability boundary; algorithms staying below it preserve representation across all top-<em>k</em> committees.</p>
+<div class="chart-wrap"><canvas id="stability-chart"></canvas></div>
+</section>
+
+<section>
+<h2>Top-20 rankings <span class="h2-sub">— side-by-side comparison</span></h2>
+<p class="section-help">Rank-change badges relative to Bradley-Terry baseline. <span style="color: var(--a3-color)">Green</span> = model moved up vs BT. <span style="color: var(--a2-color)">Orange</span> = model moved down vs BT.</p>
+<div class="rankings-grid" id="rankings-grid"></div>
+</section>
+
+<section>
+<h2>Category mixture <span class="h2-sub">— prompt distribution &amp; per-category top model</span></h2>
+<p class="section-help">12 prompt categories from a 4-base &times; 3-difficulty flattening of LMArena's <code>category_tag</code> schema. Mixture weights set by per-category battle count. Top model is the per-category Bradley-Terry winner.</p>
+<div class="cat-table" id="cat-table"></div>
+</section>
+
+<footer>
+<p>
+Built from the public PDF only. Algorithmic credit belongs to Haghtalab, Procaccia, Shao, Wang, Yang.
+The paper's authors have stated full experiment code is included with their submission; if and when it is released we defer to it.
+Data: <a href="https://huggingface.co/datasets/lmarena-ai/arena-human-preference-140k">lmarena-ai/arena-human-preference-140k</a> (CC-BY-4.0).
+20{,}000-battle subsample, top 20 LLMs by frequency. Algorithm details in
+<a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/README.md">README</a>;
+implementation choices in
+<a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/run_log.md">run log</a>.
+</p>
+</footer>
+
+<script>
+// === Embedded results (from results/results.json, generated 2026-04-30) ===
+const RESULTS = {"config":{"n_models":20,"max_battles_used":20000,"phis":[0.1,0.5,0.9],"n_eval_users":10000,"epsilon":0.1,"n_users_per_round":250,"seed":42},"model_names":["claude-opus-4-20250514","gemini-2.5-pro","gemini-2.5-flash","qwen3-235b-a22b-no-thinking","mistral-medium-2505","o3-2025-04-16","claude-sonnet-4-20250514","chatgpt-4o-latest-20250326","claude-3-7-sonnet-20250219-thinking-32k","gemma-3-27b-it","claude-3-7-sonnet-20250219","claude-3-5-sonnet-20241022","o3-mini","command-a-03-2025","deepseek-r1-0528","claude-3-5-haiku-20241022","gpt-4.1-2025-04-14","o4-mini-2025-04-16","claude-opus-4-20250514-thinking-16k","amazon.nova-pro-v1:0"],"categories":["creative_writing__high","creative_writing__low","creative_writing__med","general__high","general__low","general__med","instruction_following__high","instruction_following__low","instruction_following__med","math__high","math__low","math__med"],"category_mixture_weights":[0.02135,0.02,0.04525,0.30775,0.1164,0.28035,0.12045,0.0027,0.0128,0.0568,0.0009,0.01525],"category_top_models":{"creative_writing__high":"gemini-2.5-pro","creative_writing__low":"gemini-2.5-pro","creative_writing__med":"gemini-2.5-pro","general__high":"gemini-2.5-pro","general__low":"chatgpt-4o-latest-20250326","general__med":"gemini-2.5-pro","instruction_following__high":"gemini-2.5-pro","instruction_following__low":"o4-mini-2025-04-16","instruction_following__med":"mistral-medium-2505","math__high":"gemini-2.5-pro","math__low":"claude-opus-4-20250514","math__med":"gemini-2.5-pro"},"bt_global_ranking":["gemini-2.5-pro","o3-2025-04-16","chatgpt-4o-latest-20250326","deepseek-r1-0528","gemini-2.5-flash","qwen3-235b-a22b-no-thinking","gpt-4.1-2025-04-14","mistral-medium-2505","o4-mini-2025-04-16","gemma-3-27b-it","claude-opus-4-20250514-thinking-16k","claude-opus-4-20250514","claude-sonnet-4-20250514","command-a-03-2025","o3-mini","claude-3-7-sonnet-20250219-thinking-32k","claude-3-7-sonnet-20250219","claude-3-5-sonnet-20241022","amazon.nova-pro-v1:0","claude-3-5-haiku-20241022"],"phi_runs":[{"phi":0.1,"rankings":{"bt":["gemini-2.5-pro","o3-2025-04-16","chatgpt-4o-latest-20250326","deepseek-r1-0528","gemini-2.5-flash","qwen3-235b-a22b-no-thinking","gpt-4.1-2025-04-14","mistral-medium-2505","o4-mini-2025-04-16","gemma-3-27b-it","claude-opus-4-20250514-thinking-16k","claude-opus-4-20250514","claude-sonnet-4-20250514","command-a-03-2025","o3-mini","claude-3-7-sonnet-20250219-thinking-32k","claude-3-7-sonnet-20250219","claude-3-5-sonnet-20241022","amazon.nova-pro-v1:0","claude-3-5-haiku-20241022"],"a2":["gemini-2.5-pro","chatgpt-4o-latest-20250326","gemini-2.5-flash","deepseek-r1-0528","mistral-medium-2505","o3-2025-04-16","claude-3-7-sonnet-20250219","o4-mini-2025-04-16","claude-opus-4-20250514","qwen3-235b-a22b-no-thinking","claude-sonnet-4-20250514","claude-3-7-sonnet-20250219-thinking-32k","gemma-3-27b-it","claude-opus-4-20250514-thinking-16k","claude-3-5-sonnet-20241022","o3-mini","command-a-03-2025","claude-3-5-haiku-20241022","gpt-4.1-2025-04-14","amazon.nova-pro-v1:0"],"a3":["gemini-2.5-pro","chatgpt-4o-latest-20250326","deepseek-r1-0528","gemini-2.5-flash","mistral-medium-2505","o3-2025-04-16","claude-opus-4-20250514-thinking-16k","claude-opus-4-20250514","o4-mini-2025-04-16","claude-3-7-sonnet-20250219","qwen3-235b-a22b-no-thinking","claude-sonnet-4-20250514","claude-3-7-sonnet-20250219-thinking-32k","gemma-3-27b-it","claude-3-5-sonnet-20241022","o3-mini","command-a-03-2025","claude-3-5-haiku-20241022","gpt-4.1-2025-04-14","amazon.nova-pro-v1:0"]},"stability_curves":{"bt":[0.1315,0.2602,0.0984,0.1232,0.0675,0.081,0.0945,0.0208,0.0234,0.026,0.0154,0.0024,0.0013,0.0014,0.0015,0.0016,0.0,0.0,0.0],"a2":[0.1315,0.0692,0.0996,0.054,0.0345,0.0156,0.0182,0.0208,0.0234,0.026,0.0286,0.0312,0.0338,0.0056,0.006,0.0064,0.0068,0.0072,0.0],"a3":[0.1315,0.0692,0.1035,0.054,0.0345,0.0156,0.0182,0.0208,0.0036,0.004,0.0044,0.0048,0.0052,0.0056,0.006,0.0064,0.0068,0.0072,0.0]},"n_unstable_prefixes":{"bt":0,"a2":0,"a3":0},"max_gamma":{"bt":0.2602,"a2":0.1315,"a3":0.1315},"mean_gamma":{"bt":0.05000526315789475,"a2":0.03254736842105263,"a3":0.026384210526315788},"runtime_s":{"a2":1.77,"a3":5.71}},{"phi":0.5,"rankings":{"bt":["gemini-2.5-pro","o3-2025-04-16","chatgpt-4o-latest-20250326","deepseek-r1-0528","gemini-2.5-flash","qwen3-235b-a22b-no-thinking","gpt-4.1-2025-04-14","mistral-medium-2505","o4-mini-2025-04-16","gemma-3-27b-it","claude-opus-4-20250514-thinking-16k","claude-opus-4-20250514","claude-sonnet-4-20250514","command-a-03-2025","o3-mini","claude-3-7-sonnet-20250219-thinking-32k","claude-3-7-sonnet-20250219","claude-3-5-sonnet-20241022","amazon.nova-pro-v1:0","claude-3-5-haiku-20241022"],"a2":["gemini-2.5-pro","deepseek-r1-0528","o3-2025-04-16","chatgpt-4o-latest-20250326","gemini-2.5-flash","qwen3-235b-a22b-no-thinking","o4-mini-2025-04-16","claude-opus-4-20250514-thinking-16k","claude-opus-4-20250514","mistral-medium-2505","claude-sonnet-4-20250514","claude-3-7-sonnet-20250219-thinking-32k","gemma-3-27b-it","claude-3-7-sonnet-20250219","command-a-03-2025","gpt-4.1-2025-04-14","claude-3-5-sonnet-20241022","o3-mini","claude-3-5-haiku-20241022","amazon.nova-pro-v1:0"],"a3":["gemini-2.5-pro","chatgpt-4o-latest-20250326","deepseek-r1-0528","o3-2025-04-16","gemini-2.5-flash","qwen3-235b-a22b-no-thinking","claude-opus-4-20250514-thinking-16k","mistral-medium-2505","gpt-4.1-2025-04-14","o4-mini-2025-04-16","gemma-3-27b-it","claude-opus-4-20250514","claude-sonnet-4-20250514","claude-3-7-sonnet-20250219","o3-mini","command-a-03-2025","claude-3-7-sonnet-20250219-thinking-32k","claude-3-5-sonnet-20241022","claude-3-5-haiku-20241022","amazon.nova-pro-v1:0"]},"stability_curves":{"bt":[0.2586,0.421,0.4299,0.3656,0.119,0.0852,0.091,0.104,0.117,0.126,0.0495,0.0252,0.0078,0.0084,0.009,0.0096,0.0,0.0,0.0],"a2":[0.2586,0.4214,0.5493,0.3656,0.119,0.0852,0.098,0.096,0.108,0.118,0.1298,0.1416,0.1521,0.1638,0.1755,0.0032,0.0034,0.0,0.0],"a3":[0.2586,0.3362,0.3873,0.3656,0.119,0.0852,0.091,0.0968,0.0513,0.045,0.0495,0.0252,0.0078,0.0042,0.0045,0.0016,0.0,0.0,0.0]},"n_unstable_prefixes":{"bt":0,"a2":0,"a3":0},"max_gamma":{"bt":0.42990000000000006,"a2":0.5493,"a3":0.3873},"mean_gamma":{"bt":0.1172,"a2":0.15728947368421053,"a3":0.1015157894736842},"runtime_s":{"a2":2.5,"a3":7.96}},{"phi":0.9,"rankings":{"bt":["gemini-2.5-pro","o3-2025-04-16","chatgpt-4o-latest-20250326","deepseek-r1-0528","gemini-2.5-flash","qwen3-235b-a22b-no-thinking","gpt-4.1-2025-04-14","mistral-medium-2505","o4-mini-2025-04-16","gemma-3-27b-it","claude-opus-4-20250514-thinking-16k","claude-opus-4-20250514","claude-sonnet-4-20250514","command-a-03-2025","o3-mini","claude-3-7-sonnet-20250219-thinking-32k","claude-3-7-sonnet-20250219","claude-3-5-sonnet-20241022","amazon.nova-pro-v1:0","claude-3-5-haiku-20241022"],"a2":["gpt-4.1-2025-04-14","o3-2025-04-16","gemma-3-27b-it","gemini-2.5-pro","gemini-2.5-flash","mistral-medium-2505","deepseek-r1-0528","claude-opus-4-20250514","qwen3-235b-a22b-no-thinking","chatgpt-4o-latest-20250326","claude-opus-4-20250514-thinking-16k","claude-sonnet-4-20250514","claude-3-5-sonnet-20241022","o3-mini","command-a-03-2025","o4-mini-2025-04-16","claude-3-7-sonnet-20250219-thinking-32k","claude-3-7-sonnet-20250219","claude-3-5-haiku-20241022","amazon.nova-pro-v1:0"],"a3":["chatgpt-4o-latest-20250326","gemini-2.5-pro","deepseek-r1-0528","mistral-medium-2505","gemini-2.5-flash","o3-2025-04-16","qwen3-235b-a22b-no-thinking","gpt-4.1-2025-04-14","o4-mini-2025-04-16","claude-opus-4-20250514","claude-opus-4-20250514-thinking-16k","gemma-3-27b-it","o3-mini","claude-sonnet-4-20250514","command-a-03-2025","claude-3-7-sonnet-20250219-thinking-32k","claude-3-5-sonnet-20241022","claude-3-5-haiku-20241022","claude-3-7-sonnet-20250219","amazon.nova-pro-v1:0"]},"stability_curves":{"bt":[0.456,0.6116,0.6885,0.6808,0.615,0.597,0.5726,0.6008,0.5958,0.63,0.6424,0.4896,0.5109,0.4578,0.381,0.3584,0.3774,0.3312,0.3401],"a2":[0.6172,0.8322,1.0635,0.8928,0.941,1.0164,1.0276,1.0968,1.1403,0.66,0.6732,0.7128,0.7475,0.7728,0.8025,0.4032,0.3468,0.3312,0.3477],"a3":[0.544,0.6174,0.7095,0.8288,0.883,0.6726,0.6349,0.6008,0.5958,0.616,0.5819,0.4896,0.5122,0.5334,0.381,0.3584,0.3468,0.3618,0.3477]},"n_unstable_prefixes":{"bt":0,"a2":5,"a3":0},"max_gamma":{"bt":0.6885,"a2":1.1403,"a3":0.883},"mean_gamma":{"bt":0.5229947368421053,"a2":0.7592368421052631,"a3":0.5587157894736843},"runtime_s":{"a2":1.04,"a3":4.16}}],"wallclock_s":35.5};
+
+const ALGO_COLORS = {
+    bt: getComputedStyle(document.documentElement).getPropertyValue('--bt-color').trim(),
+    a2: getComputedStyle(document.documentElement).getPropertyValue('--a2-color').trim(),
+    a3: getComputedStyle(document.documentElement).getPropertyValue('--a3-color').trim()
+};
+const TEXT_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+const GRID_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+const THRESHOLD_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--threshold').trim();
+
+const PHI_DESCRIPTIONS = {
+    0.1: 'cohesive sub-populations &mdash; pluralism matters most here',
+    0.5: 'moderate dispersion &mdash; mixed sub-populations',
+    0.9: 'high-noise mixture &mdash; voter preferences spread broadly'
+};
+
+let currentPhi = 0.1;
+let stabilityChart = null;
+
+function init() {
+    renderConfig();
+    renderPhiSelector();
+    renderForPhi(currentPhi);
+}
+
+function renderConfig() {
+    document.getElementById('cfg-battles').textContent = RESULTS.config.max_battles_used.toLocaleString();
+    document.getElementById('cfg-models').textContent = RESULTS.config.n_models;
+    document.getElementById('cfg-categories').textContent = RESULTS.categories.length;
+    document.getElementById('cfg-evalusers').textContent = RESULTS.config.n_eval_users.toLocaleString();
+    document.getElementById('cfg-epsilon').textContent = RESULTS.config.epsilon;
+    document.getElementById('cfg-seed').textContent = RESULTS.config.seed;
+    document.getElementById('cfg-runtime').textContent = `${RESULTS.wallclock_s}s`;
+}
+
+function renderPhiSelector() {
+    const sel = document.getElementById('phi-selector');
+    RESULTS.config.phis.forEach(phi => {
+        const btn = document.createElement('button');
+        btn.className = 'phi-btn' + (phi === currentPhi ? ' active' : '');
+        btn.textContent = `φ = ${phi}`;
+        btn.dataset.phi = phi;
+        btn.onclick = () => {
+            currentPhi = phi;
+            document.querySelectorAll('.phi-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.phi) === phi));
+            renderForPhi(phi);
+        };
+        sel.appendChild(btn);
+    });
+}
+
+function getRun(phi) {
+    return RESULTS.phi_runs.find(r => Math.abs(r.phi - phi) < 1e-6);
+}
+
+function renderForPhi(phi) {
+    const run = getRun(phi);
+    document.getElementById('phi-tooltip').innerHTML = PHI_DESCRIPTIONS[phi] || '';
+    renderMetrics(run);
+    renderChart(run);
+    renderRankings(run);
+    renderCategoryTable();
+}
+
+function renderMetrics(run) {
+    const grid = document.getElementById('metrics-grid');
+    grid.innerHTML = '';
+    const algos = [
+        { key: 'bt', label: 'Bradley-Terry', tag: 'BT' },
+        { key: 'a2', label: 'Algorithm 2', tag: 'A2' },
+        { key: 'a3', label: 'Algorithm 3', tag: 'A3' }
+    ];
+    algos.forEach(({ key, label, tag }) => {
+        const card = document.createElement('div');
+        card.className = `metric-card ${key}`;
+        const max = run.max_gamma[key];
+        const mean = run.mean_gamma[key];
+        const unstable = run.n_unstable_prefixes[key];
+        const runtime = run.runtime_s[key];
+        let detail = `mean ${mean.toFixed(3)}`;
+        let detailClass = '';
+        if (runtime !== undefined) detail += ` &middot; ${runtime}s`;
+        if (unstable > 0) {
+            detail += ` &middot; <span class="warn">${unstable} unstable prefix${unstable === 1 ? '' : 'es'}</span>`;
+        } else if (key !== 'bt') {
+            detail += ' &middot; <span class="good">all stable</span>';
+        }
+        card.innerHTML = `
+            <div class="metric-label"><span class="algo-tag ${key}">${tag}</span> ${label} &middot; max &gamma;&#770;</div>
+            <div class="metric-value">${max.toFixed(3)}</div>
+            <div class="metric-detail">${detail}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function renderChart(run) {
+    const ctx = document.getElementById('stability-chart').getContext('2d');
+    const labels = run.stability_curves.bt.map((_, i) => i + 1);
+    const data = {
+        labels,
+        datasets: [
+            { label: 'Bradley-Terry', data: run.stability_curves.bt, borderColor: ALGO_COLORS.bt, backgroundColor: ALGO_COLORS.bt + '20', tension: 0.25, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2 },
+            { label: 'Algorithm 2', data: run.stability_curves.a2, borderColor: ALGO_COLORS.a2, backgroundColor: ALGO_COLORS.a2 + '20', tension: 0.25, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2 },
+            { label: 'Algorithm 3', data: run.stability_curves.a3, borderColor: ALGO_COLORS.a3, backgroundColor: ALGO_COLORS.a3 + '20', tension: 0.25, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2.5 }
+        ]
+    };
+    const yMax = Math.max(1.2, Math.max(...run.stability_curves.bt, ...run.stability_curves.a2, ...run.stability_curves.a3) * 1.15);
+    const config = {
+        type: 'line',
+        data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { labels: { color: TEXT_COLOR, font: { size: 12 } } },
+                tooltip: {
+                    backgroundColor: '#0d1b2a',
+                    titleColor: '#e0e0e0',
+                    bodyColor: '#e0e0e0',
+                    borderColor: GRID_COLOR,
+                    borderWidth: 1,
+                    callbacks: {
+                        title: (items) => `prefix size k = ${items[0].label}`,
+                        label: (item) => `${item.dataset.label}: ${item.parsed.y.toFixed(4)}`
+                    }
+                },
+                annotation: {} // Chart.js v4 with no annotation plugin; threshold drawn as a dataset below
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'prefix size k', color: TEXT_COLOR, font: { size: 11 } },
+                    ticks: { color: TEXT_COLOR, font: { size: 11 } },
+                    grid: { color: GRID_COLOR }
+                },
+                y: {
+                    title: { display: true, text: 'γ̂  (lower = more stable)', color: TEXT_COLOR, font: { size: 11 } },
+                    ticks: { color: TEXT_COLOR, font: { size: 11 } },
+                    grid: { color: GRID_COLOR },
+                    suggestedMin: 0,
+                    suggestedMax: yMax
+                }
+            }
+        }
+    };
+    // Add stability threshold as a flat dashed dataset
+    const thresholdLine = Array(labels.length).fill(1.0);
+    config.data.datasets.push({
+        label: 'stability threshold (γ̂ = 1)',
+        data: thresholdLine,
+        borderColor: THRESHOLD_COLOR,
+        borderWidth: 1.2,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false
+    });
+    if (stabilityChart) stabilityChart.destroy();
+    stabilityChart = new Chart(ctx, config);
+}
+
+function renderRankings(run) {
+    const grid = document.getElementById('rankings-grid');
+    grid.innerHTML = '';
+    const cols = [
+        { key: 'bt', label: 'Bradley-Terry', tag: 'BT' },
+        { key: 'a2', label: 'Algorithm 2', tag: 'A2' },
+        { key: 'a3', label: 'Algorithm 3', tag: 'A3' }
+    ];
+    const btRanks = {};
+    run.rankings.bt.forEach((m, i) => { btRanks[m] = i + 1; });
+    cols.forEach(({ key, label, tag }) => {
+        const col = document.createElement('div');
+        col.className = 'ranking-col';
+        const ranks = run.rankings[key];
+        const runtime = run.runtime_s[key];
+        const runtimeStr = runtime !== undefined ? `${runtime}s` : '';
+        const itemsHtml = ranks.map((model, idx) => {
+            const newRank = idx + 1;
+            const oldRank = btRanks[model];
+            const delta = oldRank - newRank;
+            let cls = 'delta-same';
+            let deltaStr = '';
+            if (key !== 'bt') {
+                if (delta > 0) { cls = 'delta-up'; deltaStr = `<span class="delta up">↑${delta}</span>`; }
+                else if (delta < 0) { cls = 'delta-down'; deltaStr = `<span class="delta down">↓${Math.abs(delta)}</span>`; }
+            }
+            return `<li class="${cls}"><span class="model-name">${model}</span>${deltaStr}</li>`;
+        }).join('');
+        col.innerHTML = `
+            <div class="ranking-header">
+                <span class="ranking-title"><span class="algo-tag ${key}">${tag}</span> ${label}</span>
+                ${runtimeStr ? `<span class="ranking-runtime">${runtimeStr}</span>` : ''}
+            </div>
+            <ol class="ranking-list">${itemsHtml}</ol>
+        `;
+        grid.appendChild(col);
+    });
+}
+
+function renderCategoryTable() {
+    const tbody = document.getElementById('cat-table');
+    tbody.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'cat-row head';
+    head.innerHTML = `<div>Category</div><div>Mixture weight</div><div>Per-category top model (BT)</div>`;
+    tbody.appendChild(head);
+    // Sort by weight descending
+    const sorted = RESULTS.categories
+        .map((cat, i) => ({ cat, weight: RESULTS.category_mixture_weights[i], top: RESULTS.category_top_models[cat] }))
+        .sort((a, b) => b.weight - a.weight);
+    const maxWeight = Math.max(...sorted.map(r => r.weight));
+    sorted.forEach(({ cat, weight, top }) => {
+        const row = document.createElement('div');
+        row.className = 'cat-row';
+        const pct = (weight / maxWeight) * 100;
+        row.innerHTML = `
+            <div class="cat-name">${cat}</div>
+            <div class="cat-bar-wrap">
+                <div class="cat-bar"><div class="cat-bar-fill" style="width: ${pct}%"></div></div>
+                <span class="cat-weight">${(weight * 100).toFixed(2)}%</span>
+            </div>
+            <div class="cat-top-model" title="${top}">${top}</div>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
