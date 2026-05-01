@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pluralistic Leaderboards Explorer</title>
-<meta name="description" content="Interactive comparison of Bradley-Terry vs Algorithms 2 & 3 from Pluralistic Leaderboards (Haghtalab, Procaccia, Shao, Wang, Yang, Jan 2026) on LMArena 140k preference data.">
+<title>Pluralistic Leaderboards Explorer — Why "best AI model" depends on who you ask</title>
+<meta name="description" content="LMArena ranks AI models from 100k+ human votes. But the standard scoring rule (Bradley-Terry) suppresses minority preferences. Explore how Procaccia's Algorithm 3 fixes this on real LMArena data.">
+<meta property="og:title" content="Pluralistic Leaderboards Explorer">
+<meta property="og:description" content="Why 'best AI model' depends on who you ask, and what to do about it. Interactive comparison of three aggregation methods on real LMArena preference data.">
+<meta property="og:type" content="website">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
@@ -18,7 +21,7 @@
     --text-muted: #707080;
     --accent: #e94560;
     --accent-dim: #c73e54;
-    --link: #53a8b6;
+    --link: #e8b44c;
     --border: #2a2a4a;
     --code-bg: #0d1b2a;
     --bt-color: #a0a0b0;
@@ -32,24 +35,26 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.6;
-    max-width: 1200px;
+    line-height: 1.65;
+    max-width: 980px;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
-    font-size: 15px;
+    padding: 2.5rem 1.5rem 4rem;
+    font-size: 15.5px;
 }
 header { margin-bottom: 2rem; }
 h1 {
-    font-size: 1.85rem;
+    font-size: 2rem;
     color: var(--accent);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
     font-weight: 700;
     letter-spacing: -0.01em;
+    line-height: 1.2;
 }
 .subtitle {
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: 1.05rem;
     margin-bottom: 1rem;
+    line-height: 1.4;
 }
 .attribution {
     color: var(--text-muted);
@@ -59,29 +64,129 @@ h1 {
 .attribution a { color: var(--link); text-decoration: none; }
 .attribution a:hover { text-decoration: underline; }
 
+section { margin-bottom: 2.5rem; }
+h2 {
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+    margin-top: 2rem;
+    font-weight: 600;
+}
+h2:first-child { margin-top: 0; }
+h2 .h2-sub {
+    color: var(--text-secondary);
+    font-weight: 400;
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+}
+h3 {
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+p {
+    margin-bottom: 0.85rem;
+    color: var(--text);
+}
+p strong { color: var(--text); }
+em { color: var(--text-secondary); font-style: italic; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+ul, ol { margin: 0.6rem 0 1rem 1.5rem; line-height: 1.7; }
+li { margin-bottom: 0.3rem; }
+
+.section-help {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+.section-help code {
+    background: var(--code-bg);
+    color: var(--link);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 0.85rem;
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 1.2rem 0;
+}
+.info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--bt-color);
+    border-radius: 4px;
+    padding: 1rem 1.2rem;
+}
+.info-card.a2 { border-left-color: var(--a2-color); }
+.info-card.a3 { border-left-color: var(--a3-color); }
+.info-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.info-card p {
+    font-size: 0.88rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    line-height: 1.55;
+}
+.info-card p:last-child { margin-bottom: 0; }
+.algo-tag {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+    font-weight: 700;
+    color: var(--bg);
+    letter-spacing: 0.03em;
+}
+.algo-tag.bt { background: var(--bt-color); }
+.algo-tag.a2 { background: var(--a2-color); }
+.algo-tag.a3 { background: var(--a3-color); }
+
+.callout {
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    margin: 1.2rem 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+.callout strong { color: var(--text); }
+
 .config-bar {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.75rem;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 1.25rem;
     margin-bottom: 2rem;
 }
-.config-cell {
-    display: flex;
-    flex-direction: column;
-}
+.config-cell { display: flex; flex-direction: column; }
 .config-label {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.15rem;
 }
 .config-value {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text);
     font-weight: 600;
     font-family: 'SF Mono', 'Menlo', monospace;
@@ -94,11 +199,7 @@ h1 {
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
 }
-.control-label {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-right: 0.5rem;
-}
+.control-label { font-size: 0.92rem; color: var(--text-secondary); margin-right: 0.5rem; }
 .control-label code {
     background: var(--code-bg);
     color: var(--link);
@@ -121,34 +222,26 @@ h1 {
     font-weight: 500;
 }
 .phi-btn:hover { border-color: var(--accent-dim); color: var(--text); }
-.phi-btn.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-}
-.phi-tooltip {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    font-style: italic;
-}
+.phi-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.phi-tooltip { color: var(--text-muted); font-size: 0.82rem; font-style: italic; }
 
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 .metric-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 1rem 1.25rem;
+    padding: 0.95rem 1.2rem;
     border-left: 4px solid var(--bt-color);
 }
 .metric-card.a2 { border-left-color: var(--a2-color); }
 .metric-card.a3 { border-left-color: var(--a3-color); }
 .metric-label {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -157,16 +250,6 @@ h1 {
     align-items: center;
     gap: 0.3rem;
 }
-.algo-tag {
-    font-size: 0.7rem;
-    padding: 0.1rem 0.4rem;
-    border-radius: 2px;
-    font-weight: 700;
-    color: var(--bg);
-}
-.algo-tag.bt { background: var(--bt-color); }
-.algo-tag.a2 { background: var(--a2-color); }
-.algo-tag.a3 { background: var(--a3-color); }
 .metric-value {
     font-size: 1.7rem;
     color: var(--text);
@@ -174,32 +257,9 @@ h1 {
     font-family: 'SF Mono', 'Menlo', monospace;
     margin-bottom: 0.2rem;
 }
-.metric-detail {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
+.metric-detail { font-size: 0.83rem; color: var(--text-secondary); }
 .metric-detail.warn { color: var(--accent); }
 .metric-detail.good { color: var(--a3-color); }
-
-section { margin-bottom: 2.5rem; }
-h2 {
-    font-size: 1.15rem;
-    color: var(--accent);
-    margin-bottom: 0.4rem;
-    font-weight: 600;
-}
-h2 .h2-sub {
-    color: var(--text-secondary);
-    font-weight: 400;
-    font-size: 0.85rem;
-    margin-left: 0.4rem;
-}
-.section-help {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-    line-height: 1.55;
-}
 
 .chart-wrap {
     background: var(--surface);
@@ -235,38 +295,27 @@ h2 .h2-sub {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.95rem;
 }
-.ranking-runtime {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-family: 'SF Mono', 'Menlo', monospace;
-}
-.ranking-list {
-    list-style: none;
-    counter-reset: rank;
-    font-size: 0.82rem;
-}
+.ranking-runtime { font-size: 0.75rem; color: var(--text-muted); font-family: 'SF Mono', 'Menlo', monospace; }
+.ranking-list { list-style: none; counter-reset: rank; font-size: 0.82rem; }
 .ranking-list li {
     counter-increment: rank;
-    padding: 0.35rem 0.5rem;
+    padding: 0.32rem 0.5rem;
     border-radius: 3px;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.12rem;
 }
 .ranking-list li::before {
     content: counter(rank);
     background: var(--surface-alt);
     color: var(--text-secondary);
-    width: 22px;
-    height: 22px;
+    width: 22px; height: 22px;
     border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.72rem;
-    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 600;
     font-family: 'SF Mono', 'Menlo', monospace;
     flex-shrink: 0;
 }
@@ -277,17 +326,10 @@ h2 .h2-sub {
     font-family: 'SF Mono', 'Menlo', monospace;
     font-size: 0.78rem;
     color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     flex: 1;
 }
-.delta {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    font-family: 'SF Mono', 'Menlo', monospace;
-    font-weight: 600;
-}
+.delta { font-size: 0.7rem; font-family: 'SF Mono', 'Menlo', monospace; font-weight: 600; color: var(--text-muted); }
 .delta.up { color: var(--a3-color); }
 .delta.down { color: var(--a2-color); }
 
@@ -317,40 +359,17 @@ h2 .h2-sub {
 }
 .cat-name { font-family: 'SF Mono', 'Menlo', monospace; font-size: 0.78rem; }
 .cat-bar-wrap { display: flex; align-items: center; gap: 0.6rem; }
-.cat-bar {
-    background: var(--bg);
-    height: 8px;
-    border-radius: 2px;
-    overflow: hidden;
-    flex: 1;
-}
-.cat-bar-fill {
-    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
-    height: 100%;
-    transition: width 0.3s ease;
-}
-.cat-weight {
-    font-family: 'SF Mono', 'Menlo', monospace;
-    color: var(--text-secondary);
-    font-size: 0.78rem;
-    width: 50px;
-    text-align: right;
-}
-.cat-top-model {
-    font-family: 'SF Mono', 'Menlo', monospace;
-    font-size: 0.78rem;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+.cat-bar { background: var(--bg); height: 8px; border-radius: 2px; overflow: hidden; flex: 1; }
+.cat-bar-fill { background: linear-gradient(90deg, var(--accent-dim), var(--accent)); height: 100%; transition: width 0.3s ease; }
+.cat-weight { font-family: 'SF Mono', 'Menlo', monospace; color: var(--text-secondary); font-size: 0.78rem; width: 50px; text-align: right; }
+.cat-top-model { font-family: 'SF Mono', 'Menlo', monospace; font-size: 0.78rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 footer {
     margin-top: 4rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--border);
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     line-height: 1.7;
 }
 footer a { color: var(--link); text-decoration: none; }
@@ -363,8 +382,9 @@ footer a:hover { text-decoration: underline; }
     .cat-bar-wrap { width: 100%; }
 }
 @media (max-width: 600px) {
-    body { padding: 1rem 0.75rem; font-size: 14px; }
-    h1 { font-size: 1.4rem; }
+    body { padding: 1.2rem 0.85rem; font-size: 14.5px; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.1rem; }
     .metrics-grid { grid-template-columns: 1fr 1fr; }
     .chart-wrap { height: 280px; padding: 0.75rem; }
 }
@@ -374,90 +394,169 @@ footer a:hover { text-decoration: underline; }
 
 <header>
 <h1>Pluralistic Leaderboards Explorer</h1>
-<p class="subtitle">Interactive comparison of Bradley-Terry vs Algorithms 2 &amp; 3 on LMArena 140k preference data</p>
+<p class="subtitle">Why "best AI model" depends on who you ask &mdash; and what social-choice theory does about it.</p>
 <p class="attribution">
 Independent reference implementation of <em>Pluralistic Leaderboards</em> by
-<a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/nika.html">Haghtalab</a>,
-<a href="https://procaccia.info">Procaccia</a>, Shao,
-<a href="https://serenalwang.com/">Wang</a>, and Yang (January 2026).
+<a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/nika.html">Nika Haghtalab</a>,
+<a href="https://procaccia.info">Ariel Procaccia</a>,
+Han Shao,
+<a href="https://serenalwang.com/">Serena Wang</a>, and
+Kunhe Yang
+(January 2026).
 <a href="https://procaccia.info/wp-content/uploads/2026/01/leaderboard.pdf">[paper]</a>
 &middot;
-<a href="https://github.com/kvr06-ai/pluralistic-leaderboards">[github]</a>
+<a href="https://github.com/kvr06-ai/pluralistic-leaderboards">[code]</a>
 &middot;
-Apache-2.0 &middot; Not officially affiliated with the paper authors.
+Apache-2.0 &middot; Independent project; not officially affiliated with the paper authors.
 </p>
 </header>
 
+<!-- ============================================================ -->
+<!-- SECTION 0: What is this? -->
+<!-- ============================================================ -->
+<section>
+
+<h2>The Problem: Leaderboards Squash Minorities</h2>
+
+<p><a href="https://lmarena.ai/">LMArena</a> ranks AI models by asking humans which one is better in head-to-head conversations. With 100k+ votes from a diverse audience, you'd think the rankings would be reliable. They are &mdash; for the <em>average</em> voter. But "the average voter" is a statistical fiction.</p>
+
+<p>Different people use AI for different things. <strong>Coders</strong> rate models by code quality. <strong>Creative writers</strong> rate them by prose. A <strong>casual user</strong> votes on completely different criteria than a <strong>research scientist</strong>. When you mash all those preferences together with the standard scoring rule (a method called <strong>Bradley-Terry</strong>), you get a single ranking that is mathematically biased toward the majority and systematically suppresses what minority sub-groups care about.</p>
+
+<p>If 30% of users strongly prefer <strong>Model X</strong> for coding and 70% prefer <strong>Model Y</strong> for everything else, Bradley-Terry says <em>"Y wins, every position."</em> The ranking acts like the 30% don't exist. That's not just a fairness issue &mdash; it's an <strong>information loss</strong>. The leaderboard fails to tell coders the right answer.</p>
+
+<h2>The Solution: Proportional Voice for Voter Sub-Groups</h2>
+
+<p>A 2026 paper from <a href="https://procaccia.info">Ariel Procaccia</a>'s group at Harvard SEAS (with <a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/nika.html">Nika Haghtalab</a> at UC Berkeley) proposes a fix: instead of producing one ranking that pleases the average, produce a ranking where every proportionally-large sub-group of voters has its preferred model represented. This idea comes from <strong>social choice theory</strong> &mdash; the math of how groups should aggregate preferences fairly. The key concept is <em>local stability</em>: a ranking is "locally stable" if no sub-group can complain that another model would have served them better.</p>
+
+<p>The paper proposes three algorithms. The first one (<strong>Algorithm 1</strong>) does committee selection &mdash; it picks one stable committee. The other two extend that idea to producing a full ranking, top to bottom, with a stability guarantee at every position.</p>
+
+<h2>What This Tool Does</h2>
+
+<p>This tool takes <strong>20,000 real LMArena head-to-head votes</strong> and asks: <em>how would the leaderboard look under each method?</em> You can compare three rankings side by side:</p>
+
+<div class="info-cards">
+
+    <div class="info-card">
+        <h3><span class="algo-tag bt">BT</span> Bradley-Terry (the standard)</h3>
+        <p><strong>How it works:</strong> Treats every vote as evidence of one universal "skill" score per model. Fits a single number per model that best explains all the votes. Models are ranked by skill score.</p>
+        <p><strong>Key property:</strong> Simple, fast, mathematically clean &mdash; and <em>silently assumes everyone agrees what "better" means</em>. Breaks when voters split into sub-groups with different preferences.</p>
+    </div>
+
+    <div class="info-card a2">
+        <h3><span class="algo-tag a2">A2</span> Algorithm 2 (geometric checkpoints)</h3>
+        <p><strong>How it works:</strong> Uses Algorithm 1 to fill the leaderboard in geometrically-spaced batches (positions 1, 2, 4, 8, 16). Each batch is chosen to be locally stable on its own.</p>
+        <p><strong>Key property:</strong> Theoretically simpler. <em>Empirically can fail</em> at high voter dispersion &mdash; on our data, it violates stability at five prefix sizes when φ=0.9. Useful as a comparison point, not as the right answer.</p>
+    </div>
+
+    <div class="info-card a3">
+        <h3><span class="algo-tag a3">A3</span> Algorithm 3 (one-at-a-time, the headline)</h3>
+        <p><strong>How it works:</strong> Builds the leaderboard one model at a time. For each new pick, it asks: <em>"Would adding this model leave any proportionally-large sub-group of voters without a preferred option in the top-k so far?"</em> If yes, picks differently. Repeats until the leaderboard is full.</p>
+        <p><strong>Key property:</strong> No proportionally-large sub-group can complain that their favorite isn't represented. Gives every voter cluster a "voice" on the leaderboard, in proportion to its size. <em>This is the headline algorithm of the paper.</em></p>
+    </div>
+
+</div>
+
+<h2>How to Read the Results</h2>
+
+<ol>
+    <li><strong>Toggle the φ button</strong> (top of the interactive section) to change how spread-out voter preferences are. Low φ = voters cluster into clear sub-groups; high φ = preferences are noisy and broad.</li>
+    <li><strong>Look at the headline metric &gamma;&#770;</strong> (gamma-hat). This is the worst-case "complaint score" &mdash; how loudly the most-shortchanged sub-group could complain. <strong>Lower &gamma;&#770; = more representative ranking.</strong> The dashed red line at &gamma;&#770; = 1 is the fairness threshold; below it means no sub-group has a valid complaint.</li>
+    <li><strong>Compare the three rankings</strong>. Models that move <span style="color: var(--a3-color);">up</span> from Bradley-Terry's order get a green badge; models that move <span style="color: var(--a2-color);">down</span> get an orange one. The <em>differences</em> are where Algorithm 3 is doing real work &mdash; surfacing models that a sub-group prefers but Bradley-Terry's average-voter view drowned out.</li>
+    <li><strong>Try this:</strong> set φ = 0.1 (cohesive sub-groups). Watch <strong>Bradley-Terry</strong> rank <code>gpt-4.1</code> at #7. Now look at <strong>Algorithm 3</strong> &mdash; <code>gpt-4.1</code> drops to #19. Why? Bradley-Terry sees its average win-rate as solid, but no sub-group of voters strongly prefers it; A3's pluralism filter catches that. Compare to <code>claude-opus-4-thinking-16k</code>, which jumps from #11 (BT) to #7 (A3) because a niche sub-group favors it strongly enough to deserve representation.</li>
+</ol>
+
+<h2>What "Algorithm 3" Means in One Sentence</h2>
+
+<p style="background: rgba(107, 213, 163, 0.08); border-left: 3px solid var(--a3-color); padding: 1rem 1.2rem; border-radius: 4px; margin: 1rem 0;">
+<strong>Build the leaderboard so that no proportionally-large sub-group of voters can name a different model they'd rather have at any position.</strong> Not "the model the average voter likes most" &mdash; "the model the next sub-group needs represented." Repeated, top to bottom, until the leaderboard is full.
+</p>
+
+<div class="callout">
+    <strong>A note on the data:</strong>
+    The model names below (Gemini 2.5 Pro, Claude Opus 4, Sonnet 4, etc.) reflect what was on LMArena in mid-2025 &mdash; that's when the underlying dataset (<code>lmarena-ai/arena-human-preference-140k</code>) was released. LMArena hasn't published a newer general-preference dataset of comparable size, and this is the same snapshot the paper uses. The algorithmic point is independent of model freshness; the rankings would update with newer data, but the BT-vs-A3 separation pattern wouldn't. A sensitivity check on a smaller, newer slice (<code>arena-expert-5k</code>, November 2025) is in the repo if you want to verify.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: Interactive Explorer -->
+<!-- ============================================================ -->
+<section>
+
+<h2>The Run, Live</h2>
+
+<p class="section-help">All numbers below come from a single end-to-end run committed in the repo (<code>results/results.json</code>). Reproducible from one seed in ~35 seconds on CPU.</p>
+
 <div class="config-bar">
-    <div class="config-cell">
-        <span class="config-label">Battles</span>
-        <span class="config-value" id="cfg-battles">—</span>
-    </div>
-    <div class="config-cell">
-        <span class="config-label">Models</span>
-        <span class="config-value" id="cfg-models">—</span>
-    </div>
-    <div class="config-cell">
-        <span class="config-label">Categories</span>
-        <span class="config-value" id="cfg-categories">—</span>
-    </div>
-    <div class="config-cell">
-        <span class="config-label">Eval users</span>
-        <span class="config-value" id="cfg-evalusers">—</span>
-    </div>
-    <div class="config-cell">
-        <span class="config-label">Epsilon</span>
-        <span class="config-value" id="cfg-epsilon">—</span>
-    </div>
-    <div class="config-cell">
-        <span class="config-label">Seed</span>
-        <span class="config-value" id="cfg-seed">—</span>
-    </div>
-    <div class="config-cell">
-        <span class="config-label">Runtime</span>
-        <span class="config-value" id="cfg-runtime">—</span>
-    </div>
+    <div class="config-cell"><span class="config-label">Battles</span><span class="config-value" id="cfg-battles">—</span></div>
+    <div class="config-cell"><span class="config-label">Models</span><span class="config-value" id="cfg-models">—</span></div>
+    <div class="config-cell"><span class="config-label">Categories</span><span class="config-value" id="cfg-categories">—</span></div>
+    <div class="config-cell"><span class="config-label">Eval users</span><span class="config-value" id="cfg-evalusers">—</span></div>
+    <div class="config-cell"><span class="config-label">Epsilon</span><span class="config-value" id="cfg-epsilon">—</span></div>
+    <div class="config-cell"><span class="config-label">Seed</span><span class="config-value" id="cfg-seed">—</span></div>
+    <div class="config-cell"><span class="config-label">Runtime</span><span class="config-value" id="cfg-runtime">—</span></div>
 </div>
 
 <div class="controls">
-    <span class="control-label">Mallows dispersion <code>&phi;</code>:</span>
+    <span class="control-label">Voter dispersion <code>&phi;</code>:</span>
     <div class="phi-selector" id="phi-selector"></div>
-    <span class="phi-tooltip" id="phi-tooltip">Lower &phi; = cohesive sub-populations &middot; Higher &phi; = high-noise mixture</span>
+    <span class="phi-tooltip" id="phi-tooltip">Lower &phi; = cohesive sub-groups &middot; Higher &phi; = noisier preferences</span>
 </div>
 
-<section>
-<h2>Headline metrics <span class="h2-sub">— max &gamma;&#770; over all prefix sizes <em>k</em></span></h2>
-<p class="section-help">A committee is locally stable when &gamma;&#770; &le; 1. Lower max &gamma;&#770; = aggregation rule respects minority sub-populations more reliably. Algorithm 3 should dominate Bradley-Terry at low &phi; (the regime where pluralism matters most).</p>
+<h3>Headline metric: max &gamma;&#770; (worst-case complaint score)</h3>
+<p class="section-help">Lower is better. <code>&gamma;&#770;</code> measures the worst-case complaint a sub-group could make about the leaderboard at the size that bothers them most. Below 1 = no sub-group has a valid complaint at any position.</p>
 <div class="metrics-grid" id="metrics-grid"></div>
-</section>
 
-<section>
-<h2>Stability curves <span class="h2-sub">— &gamma;&#770; vs prefix size <em>k</em></span></h2>
-<p class="section-help">Each line plots &gamma;&#770; for prefix sizes <em>k</em> = 1 through 19. The horizontal threshold at &gamma;&#770; = 1 is the local-stability boundary; algorithms staying below it preserve representation across all top-<em>k</em> committees.</p>
+<h3>Stability curves</h3>
+<p class="section-help">Each line plots the complaint score at every leaderboard size from top-1 to top-19. The horizontal threshold at &gamma;&#770; = 1 is the fairness boundary; algorithms staying below it preserve representation across all leaderboard sizes. <strong>The further the green line (A3) sits below the gray line (BT), the more pluralism the algorithm is recovering.</strong></p>
 <div class="chart-wrap"><canvas id="stability-chart"></canvas></div>
-</section>
 
-<section>
-<h2>Top-20 rankings <span class="h2-sub">— side-by-side comparison</span></h2>
-<p class="section-help">Rank-change badges relative to Bradley-Terry baseline. <span style="color: var(--a3-color)">Green</span> = model moved up vs BT. <span style="color: var(--a2-color)">Orange</span> = model moved down vs BT.</p>
+<h3>Top-20 rankings, side by side</h3>
+<p class="section-help">Same models, three different rankings. Rank-change badges show movement relative to Bradley-Terry. <span style="color: var(--a3-color)">Green up-arrows</span> = model moved up vs BT (a sub-group's favorite that BT missed). <span style="color: var(--a2-color)">Orange down-arrows</span> = model moved down vs BT (BT over-weighted it relative to its actual sub-group support).</p>
 <div class="rankings-grid" id="rankings-grid"></div>
+
+<h3>Where the votes come from</h3>
+<p class="section-help">12 prompt categories from a 4-base &times; 3-difficulty flattening of LMArena's <code>category_tag</code> schema. The mixture weight is the share of votes in that category; the per-category top model is the Bradley-Terry winner restricted to that slice. <strong>Note that <code>gemini-2.5-pro</code> wins 9 of 12 categories</strong> &mdash; this is why Bradley-Terry happens to perform well at high &phi; on this snapshot, and why a more diverse dataset would surface the BT-vs-A3 gap more starkly.</p>
+<div class="cat-table" id="cat-table"></div>
+
 </section>
 
+<!-- ============================================================ -->
+<!-- SECTION 2: Why this matters -->
+<!-- ============================================================ -->
 <section>
-<h2>Category mixture <span class="h2-sub">— prompt distribution &amp; per-category top model</span></h2>
-<p class="section-help">12 prompt categories from a 4-base &times; 3-difficulty flattening of LMArena's <code>category_tag</code> schema. Mixture weights set by per-category battle count. Top model is the per-category Bradley-Terry winner.</p>
-<div class="cat-table" id="cat-table"></div>
+
+<h2>Why This Matters Beyond LMArena</h2>
+
+<p>Leaderboards are not just bragging rights. <strong>RLHF training data</strong> &mdash; the human preferences that shape every modern AI model &mdash; flows through the same kind of aggregation. If Bradley-Terry suppresses minority preferences in evaluation, it suppresses them in training too. The result is models that are quietly miscalibrated for entire user populations.</p>
+
+<p>Procaccia's group calls this <strong>mechanism alignment</strong>: aligning the AI's training and evaluation mechanisms with the actual diversity of human preferences, instead of an averaged-out fiction. Pluralistic Leaderboards is one piece of a three-paper 2026 program from his lab on this question:</p>
+
+<ul>
+    <li><strong>Pluralistic Leaderboards</strong> (this artifact) &mdash; how to <em>aggregate</em> preferences fairly</li>
+    <li><strong><a href="https://arxiv.org/abs/2602.21297">Robust AI Evaluation through Maximal Lotteries</a></strong> &mdash; how to <em>evaluate</em> AI systems robustly under preference heterogeneity</li>
+    <li><strong><a href="https://arxiv.org/abs/2602.01002">How RLHF Amplifies Sycophancy</a></strong> &mdash; how Bradley-Terry's misspecification <em>propagates into RLHF</em>, producing sycophantic models</li>
+</ul>
+
+<p>All three argue the same thing from different angles: <strong>the standard aggregation method (Bradley-Terry) is a load-bearing failure mode in modern AI evaluation and alignment, and social-choice theory provides the principled fix.</strong></p>
+
 </section>
 
 <footer>
 <p>
-Built from the public PDF only. Algorithmic credit belongs to Haghtalab, Procaccia, Shao, Wang, Yang.
-The paper's authors have stated full experiment code is included with their submission; if and when it is released we defer to it.
-Data: <a href="https://huggingface.co/datasets/lmarena-ai/arena-human-preference-140k">lmarena-ai/arena-human-preference-140k</a> (CC-BY-4.0).
-20{,}000-battle subsample, top 20 LLMs by frequency. Algorithm details in
-<a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/README.md">README</a>;
-implementation choices in
-<a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/run_log.md">run log</a>.
+This is an independent reference implementation built from the public PDF only. Algorithmic credit belongs to Haghtalab, Procaccia, Shao, Wang, and Yang. The paper's authors have stated full experiment code is included with their submission; if and when it is released we defer to the official version.
+</p>
+<p>
+Data: <a href="https://huggingface.co/datasets/lmarena-ai/arena-human-preference-140k">lmarena-ai/arena-human-preference-140k</a> (CC-BY-4.0, snapshot 2025-08-01).
+20,000-battle subsample, top 20 LLMs by frequency.
+Algorithm details in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/README.md">README</a>;
+implementation choices in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/run_log.md">run log</a>.
+Sensitivity check on the newer <a href="https://huggingface.co/datasets/lmarena-ai/arena-expert-5k">arena-expert-5k</a> (Nov 2025) in the repo.
+</p>
+<p>
+&copy; 2026 Kaushik Rajan &middot; Apache-2.0 &middot;
+<a href="https://kaushikrajan.me">kaushikrajan.me</a> &middot;
+<a href="https://github.com/kvr06-ai">github.com/kvr06-ai</a>
 </p>
 </footer>
 
@@ -475,9 +574,9 @@ const GRID_COLOR = getComputedStyle(document.documentElement).getPropertyValue('
 const THRESHOLD_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--threshold').trim();
 
 const PHI_DESCRIPTIONS = {
-    0.1: 'cohesive sub-populations &mdash; pluralism matters most here',
-    0.5: 'moderate dispersion &mdash; mixed sub-populations',
-    0.9: 'high-noise mixture &mdash; voter preferences spread broadly'
+    0.1: 'cohesive sub-groups &mdash; pluralism matters most here',
+    0.5: 'moderate dispersion &mdash; mixed sub-groups',
+    0.9: 'high noise &mdash; voter preferences spread broadly'
 };
 
 let currentPhi = 0.1;
@@ -544,7 +643,6 @@ function renderMetrics(run) {
         const unstable = run.n_unstable_prefixes[key];
         const runtime = run.runtime_s[key];
         let detail = `mean ${mean.toFixed(3)}`;
-        let detailClass = '';
         if (runtime !== undefined) detail += ` &middot; ${runtime}s`;
         if (unstable > 0) {
             detail += ` &middot; <span class="warn">${unstable} unstable prefix${unstable === 1 ? '' : 'es'}</span>`;
@@ -552,7 +650,7 @@ function renderMetrics(run) {
             detail += ' &middot; <span class="good">all stable</span>';
         }
         card.innerHTML = `
-            <div class="metric-label"><span class="algo-tag ${key}">${tag}</span> ${label} &middot; max &gamma;&#770;</div>
+            <div class="metric-label"><span class="algo-tag ${key}">${tag}</span> ${label}</div>
             <div class="metric-value">${max.toFixed(3)}</div>
             <div class="metric-detail">${detail}</div>
         `;
@@ -572,6 +670,17 @@ function renderChart(run) {
         ]
     };
     const yMax = Math.max(1.2, Math.max(...run.stability_curves.bt, ...run.stability_curves.a2, ...run.stability_curves.a3) * 1.15);
+    const thresholdLine = Array(labels.length).fill(1.0);
+    data.datasets.push({
+        label: 'fairness threshold (γ̂ = 1)',
+        data: thresholdLine,
+        borderColor: THRESHOLD_COLOR,
+        borderWidth: 1.2,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false
+    });
     const config = {
         type: 'line',
         data,
@@ -588,20 +697,19 @@ function renderChart(run) {
                     borderColor: GRID_COLOR,
                     borderWidth: 1,
                     callbacks: {
-                        title: (items) => `prefix size k = ${items[0].label}`,
+                        title: (items) => `top-${items[0].label} leaderboard`,
                         label: (item) => `${item.dataset.label}: ${item.parsed.y.toFixed(4)}`
                     }
-                },
-                annotation: {} // Chart.js v4 with no annotation plugin; threshold drawn as a dataset below
+                }
             },
             scales: {
                 x: {
-                    title: { display: true, text: 'prefix size k', color: TEXT_COLOR, font: { size: 11 } },
+                    title: { display: true, text: 'leaderboard size (top-k)', color: TEXT_COLOR, font: { size: 11 } },
                     ticks: { color: TEXT_COLOR, font: { size: 11 } },
                     grid: { color: GRID_COLOR }
                 },
                 y: {
-                    title: { display: true, text: 'γ̂  (lower = more stable)', color: TEXT_COLOR, font: { size: 11 } },
+                    title: { display: true, text: 'γ̂  (lower = more representative)', color: TEXT_COLOR, font: { size: 11 } },
                     ticks: { color: TEXT_COLOR, font: { size: 11 } },
                     grid: { color: GRID_COLOR },
                     suggestedMin: 0,
@@ -610,18 +718,6 @@ function renderChart(run) {
             }
         }
     };
-    // Add stability threshold as a flat dashed dataset
-    const thresholdLine = Array(labels.length).fill(1.0);
-    config.data.datasets.push({
-        label: 'stability threshold (γ̂ = 1)',
-        data: thresholdLine,
-        borderColor: THRESHOLD_COLOR,
-        borderWidth: 1.2,
-        borderDash: [6, 4],
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        fill: false
-    });
     if (stabilityChart) stabilityChart.destroy();
     stabilityChart = new Chart(ctx, config);
 }
@@ -672,7 +768,6 @@ function renderCategoryTable() {
     head.className = 'cat-row head';
     head.innerHTML = `<div>Category</div><div>Mixture weight</div><div>Per-category top model (BT)</div>`;
     tbody.appendChild(head);
-    // Sort by weight descending
     const sorted = RESULTS.categories
         .map((cat, i) => ({ cat, weight: RESULTS.category_mixture_weights[i], top: RESULTS.category_top_models[cat] }))
         .sort((a, b) => b.weight - a.weight);
