@@ -522,6 +522,85 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
 </section>
 
 <!-- ============================================================ -->
+<!-- SECTION 1.5: Sensitivity check -->
+<!-- ============================================================ -->
+<section>
+
+<h2>Does This Hold on Newer Data?</h2>
+
+<p>The canonical run above uses LMArena's August 2025 dataset because it's the largest publicly-released slice and the same one Procaccia's paper uses. To check whether the algorithmic findings hold on more recent data, we re-ran the same Algorithm 1/2/3 + Bradley-Terry comparison on <a href="https://huggingface.co/datasets/lmarena-ai/arena-expert-5k">lmarena-ai/arena-expert-5k</a> &mdash; an expert-only vote slice from <strong>November 2025</strong> (smaller but newer; 605 in-slice battles after filtering, 19 active categories, no dominant faction).</p>
+
+<h3>Side-by-side: max &gamma;&#770; on both datasets</h3>
+
+<div class="cat-table" style="display: block;">
+<div class="cat-row head" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr;">
+    <div>&phi;</div>
+    <div>Dataset</div>
+    <div>BT max &gamma;&#770;</div>
+    <div>A2 max &gamma;&#770;</div>
+    <div>A3 max &gamma;&#770;</div>
+</div>
+<div class="cat-row" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr;">
+    <div style="color: var(--text); font-weight: 600;">0.1</div>
+    <div style="color: var(--text-secondary);">arena-human-preference-140k</div>
+    <div style="color: var(--text);">0.260</div>
+    <div style="color: var(--text);">0.132</div>
+    <div style="color: var(--a3-color); font-weight: 600;">0.132 ✓</div>
+</div>
+<div class="cat-row" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr;">
+    <div style="color: var(--text); font-weight: 600;">0.1</div>
+    <div style="color: var(--text-secondary);">arena-expert-5k (Nov 2025)</div>
+    <div style="color: var(--text);">0.699</div>
+    <div style="color: var(--text);">0.694</div>
+    <div style="color: var(--text);">0.704</div>
+</div>
+<div class="cat-row" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr; background: rgba(107, 213, 163, 0.05);">
+    <div style="color: var(--text); font-weight: 600;">0.5</div>
+    <div style="color: var(--text-secondary);">arena-human-preference-140k</div>
+    <div style="color: var(--text);">0.430</div>
+    <div style="color: var(--text);">0.549</div>
+    <div style="color: var(--a3-color); font-weight: 600;">0.387 ✓</div>
+</div>
+<div class="cat-row" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr; background: rgba(107, 213, 163, 0.05);">
+    <div style="color: var(--text); font-weight: 600;">0.5</div>
+    <div style="color: var(--text-secondary);">arena-expert-5k (Nov 2025)</div>
+    <div style="color: var(--text);">0.742</div>
+    <div style="color: var(--text);">0.974</div>
+    <div style="color: var(--a3-color); font-weight: 600;">0.560 ✓</div>
+</div>
+<div class="cat-row" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr;">
+    <div style="color: var(--text); font-weight: 600;">0.9</div>
+    <div style="color: var(--text-secondary);">arena-human-preference-140k</div>
+    <div style="color: var(--text); font-weight: 600;">0.689</div>
+    <div style="color: var(--accent);">1.140 (5 unstable)</div>
+    <div style="color: var(--text);">0.883</div>
+</div>
+<div class="cat-row" style="grid-template-columns: 90px 1fr 1fr 1fr 1fr;">
+    <div style="color: var(--text); font-weight: 600;">0.9</div>
+    <div style="color: var(--text-secondary);">arena-expert-5k (Nov 2025)</div>
+    <div style="color: var(--text); font-weight: 600;">0.813</div>
+    <div style="color: var(--text);">0.865</div>
+    <div style="color: var(--accent);">1.171 (4 unstable)</div>
+</div>
+</div>
+
+<h3>What we found &mdash; honest read</h3>
+
+<p>Three observations from the side-by-side:</p>
+
+<ol>
+    <li><strong>Mid-&phi; (0.5): the paper's main claim replicates cleanly on both datasets.</strong> Algorithm 3 cuts max &gamma;&#770; vs Bradley-Terry by 10% on 140k and <strong>24% on the 5k slice</strong> &mdash; the regime where pluralism matters most. This is the most stable, transferable result.</li>
+    <li><strong>Low-&phi; (0.1): the pattern weakens on 5k.</strong> All three methods land within ~1% of each other on this seed (A3 = 0.704 vs BT = 0.699). A second seed (seed = 7) showed A3 winning by 13%, so the qualitative claim still holds in expectation, but not strictly per-seed. The expert-5k Mallows centers are highly heterogeneous across 19 categories, so even concentrated oracles produce a high baseline &gamma;&#770;.</li>
+    <li><strong>High-&phi; (0.9): the pattern <em>inverts</em>.</strong> On 140k, A2 violated stability at 5 prefixes and A3 was stable. On 5k, <strong>A3 violates at 4 prefixes</strong> (max 1.17 at k=8); A2 stays stable. Confirmed across seeds. Mechanism: the 5k slice has 19 categories of comparable mass with no dominant faction (max weight 27% on "software"); 140k had <code>gemini-2.5-pro</code> winning 9 of 12 categories. Algorithm 3's single-addition decomposition cannot satisfy 19 high-dispersion factions for small <em>k</em>; Algorithm 2's geometric checkpoints reset the lottery and recover.</li>
+</ol>
+
+<div class="callout">
+<strong>The honest takeaway:</strong> Algorithm 3 reliably dominates Bradley-Terry in the <strong>mid-dispersion regime</strong> &mdash; where the paper's central claim sits and where most real LMArena-style preference data falls. At low and high dispersion, empirical performance depends on the underlying user-distribution structure: <em>whether there's a dominant faction (favors A3) or many comparable-mass factions (favors A2).</em> This is a research conversation, not a failure: the headline guarantee for A3 is theoretical; empirical max &gamma;&#770; varies with the oracle's structure. Worth flagging in any joint write-up &mdash; the data is in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/results-expert-5k.json"><code>results/results-expert-5k.json</code></a> and the discussion in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/run_log.md"><code>run_log.md</code></a>.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
 <!-- SECTION 2: Why this matters -->
 <!-- ============================================================ -->
 <section>
