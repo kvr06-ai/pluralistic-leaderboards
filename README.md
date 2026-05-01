@@ -20,7 +20,7 @@ The library implements:
   approximately stable lottery and rejection sampling for unsatisfied users.
 - **Algorithm 2**: ranking via geometric checkpoints.
 - **Algorithm 3**: ranking via committee monotonicity (single-addition
-  decomposition with `k_t = 1`). This is the headline algorithm.
+  decomposition with `k_t = 1`). This is the paper's central ranking algorithm.
 - **Bradley-Terry baseline** (Chiang et al., 2024 style) via
   Minorization-Maximization, with optional per-battle weights.
 - **Mallows mixture sampler** (Repeated Insertion Model) for synthetic
@@ -94,7 +94,7 @@ by relative pairwise-comparison count per category).
 | 0.5 | unstable prefixes (gamma > 1) | 0 | 0 | **0** |
 | 0.9 | unstable prefixes (gamma > 1) | 0 | 5 | **0** |
 
-Headline takeaways (seed = 42):
+Three observations from this run (seed = 42):
 
 1. **At low dispersion (`phi = 0.1`)**, Algorithm 3 cuts the worst-case
    stability ratio nearly in half versus Bradley-Terry (0.132 vs 0.260) and

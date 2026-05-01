@@ -62,7 +62,7 @@ python notebooks/lmarena_demo.py \
 (including HF download) ~2 minutes. Per-phi runtime breakdown stored under
 `results.json`'s `phi_runs[i].runtime_s`.
 
-### Numeric headlines
+### Numeric results
 
 | phi | BT max gamma_hat | A2 max gamma_hat | A3 max gamma_hat | A3 unstable prefixes |
 |----:|----------------:|----------------:|----------------:|---------------------:|
@@ -208,7 +208,7 @@ The 140k loader is untouched. The new loader function is
 (vs 140k where `general__high` + `general__med` together carry ~0.59 of the
 mass and `gemini-2.5-pro` tops 10/12 categories.)
 
-### Numeric headlines
+### Numeric results
 
 | phi | BT max gamma_hat | A2 max gamma_hat | A3 max gamma_hat | A3 unstable prefixes |
 |----:|----------------:|----------------:|----------------:|---------------------:|
@@ -216,7 +216,7 @@ mass and `gemini-2.5-pro` tops 10/12 categories.)
 | 0.5 | 0.742 | 0.974 | **0.560** | 0 |
 | 0.9 | **0.813** | 0.865 | 1.171 | 4 |
 
-For comparison, the canonical 140k headlines (seed=42) were:
+For comparison, the canonical 140k results (seed=42) were:
 
 | phi | BT max gamma_hat | A2 max gamma_hat | A3 max gamma_hat |
 |----:|----------------:|----------------:|----------------:|
@@ -280,7 +280,7 @@ dataset is offset by 19 vs 12 categories in the per-category BT loop).
 - **At mid phi:** A3 strictly cuts max gamma_hat -- **claim holds**.
 - **At high phi:** A3 cuts max gamma_hat where A2 fails on the 140k slice;
   on the expert-5k slice the roles swap (A2 stable, A3 unstable). The
-  paper's headline guarantee for A3 ("monotonic stability across all k")
+  paper's central guarantee for A3 ("monotonic stability across all k")
   is a worst-case theoretical bound, but empirical max gamma_hat depends
   on the structure of the user distribution. **Worth noting in any joint
   write-up.**

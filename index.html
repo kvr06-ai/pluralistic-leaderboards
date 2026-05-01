@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pluralistic Leaderboards Explorer — Why "best AI model" depends on who you ask</title>
+<title>Pluralistic Leaderboards Explorer (Why "best AI model" depends on who you ask)</title>
 <meta name="description" content="LMArena ranks AI models from 100k+ human votes. But the standard scoring rule (Bradley-Terry) suppresses minority preferences. Explore how Procaccia's Algorithm 3 fixes this on real LMArena data.">
 <meta property="og:title" content="Pluralistic Leaderboards Explorer">
 <meta property="og:description" content="Why 'best AI model' depends on who you ask, and what to do about it. Interactive comparison of three aggregation methods on real LMArena preference data.">
@@ -394,7 +394,7 @@ footer a:hover { text-decoration: underline; }
 
 <header>
 <h1>Pluralistic Leaderboards Explorer</h1>
-<p class="subtitle">Why "best AI model" depends on who you ask &mdash; and what social-choice theory does about it.</p>
+<p class="subtitle">Why "best AI model" depends on who you ask, and what social-choice theory does about it.</p>
 <p class="attribution">
 Independent reference implementation of <em>Pluralistic Leaderboards</em> by
 <a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/nika.html">Nika Haghtalab</a>,
@@ -418,17 +418,17 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
 
 <h2>The Problem: Leaderboards Squash Minorities</h2>
 
-<p><a href="https://lmarena.ai/">LMArena</a> ranks AI models by asking humans which one is better in head-to-head conversations. With 100k+ votes from a diverse audience, you'd think the rankings would be reliable. They are &mdash; for the <em>average</em> voter. But "the average voter" is a statistical fiction.</p>
+<p><a href="https://lmarena.ai/">LMArena</a> ranks AI models by asking humans which one is better in head-to-head conversations. With 100k+ votes from a diverse audience, you'd think the rankings would be reliable. They are (for the <em>average</em> voter). But "the average voter" is a statistical fiction.</p>
 
 <p>Different people use AI for different things. <strong>Coders</strong> rate models by code quality. <strong>Creative writers</strong> rate them by prose. A <strong>casual user</strong> votes on completely different criteria than a <strong>research scientist</strong>. When you mash all those preferences together with the standard scoring rule (a method called <strong>Bradley-Terry</strong>), you get a single ranking that is mathematically biased toward the majority and systematically suppresses what minority sub-groups care about.</p>
 
-<p>If 30% of users strongly prefer <strong>Model X</strong> for coding and 70% prefer <strong>Model Y</strong> for everything else, Bradley-Terry says <em>"Y wins, every position."</em> The ranking acts like the 30% don't exist. That's not just a fairness issue &mdash; it's an <strong>information loss</strong>. The leaderboard fails to tell coders the right answer.</p>
+<p>If 30% of users strongly prefer <strong>Model X</strong> for coding and 70% prefer <strong>Model Y</strong> for everything else, Bradley-Terry says <em>"Y wins, every position."</em> The ranking acts like the 30% don't exist. The leaderboard fails to tell coders the right answer (an <strong>information loss</strong>, not just a fairness complaint).</p>
 
 <h2>The Solution: Proportional Voice for Voter Sub-Groups</h2>
 
-<p>A 2026 paper from <a href="https://procaccia.info">Ariel Procaccia</a>'s group at Harvard SEAS (with <a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/nika.html">Nika Haghtalab</a> at UC Berkeley) proposes a fix: instead of producing one ranking that pleases the average, produce a ranking where every proportionally-large sub-group of voters has its preferred model represented. This idea comes from <strong>social choice theory</strong> &mdash; the math of how groups should aggregate preferences fairly. The key concept is <em>local stability</em>: a ranking is "locally stable" if no sub-group can complain that another model would have served them better.</p>
+<p>A 2026 paper from <a href="https://procaccia.info">Ariel Procaccia</a>'s group at Harvard SEAS (with <a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/nika.html">Nika Haghtalab</a> at UC Berkeley) proposes a fix: instead of producing one ranking that pleases the average, produce a ranking where every proportionally-large sub-group of voters has its preferred model represented. This idea comes from <strong>social choice theory</strong> (the math of how groups should aggregate preferences fairly). The key concept is <em>local stability</em>: a ranking is "locally stable" if no sub-group can complain that another model would have served them better.</p>
 
-<p>The paper proposes three algorithms. The first one (<strong>Algorithm 1</strong>) does committee selection &mdash; it picks one stable committee. The other two extend that idea to producing a full ranking, top to bottom, with a stability guarantee at every position.</p>
+<p>The paper proposes three algorithms. The first one (<strong>Algorithm 1</strong>) does committee selection (it picks one stable committee). The other two extend that idea to producing a full ranking, top to bottom, with a stability guarantee at every position.</p>
 
 <h2>What This Tool Does</h2>
 
@@ -439,19 +439,19 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
     <div class="info-card">
         <h3><span class="algo-tag bt">BT</span> Bradley-Terry (the standard)</h3>
         <p><strong>How it works:</strong> Treats every vote as evidence of one universal "skill" score per model. Fits a single number per model that best explains all the votes. Models are ranked by skill score.</p>
-        <p><strong>Key property:</strong> Simple, fast, mathematically clean &mdash; and <em>silently assumes everyone agrees what "better" means</em>. Breaks when voters split into sub-groups with different preferences.</p>
+        <p><strong>Key property:</strong> Simple, fast, mathematically clean, but it <em>silently assumes everyone agrees what "better" means</em>. Breaks when voters split into sub-groups with different preferences.</p>
     </div>
 
     <div class="info-card a2">
         <h3><span class="algo-tag a2">A2</span> Algorithm 2 (geometric checkpoints)</h3>
         <p><strong>How it works:</strong> Uses Algorithm 1 to fill the leaderboard in geometrically-spaced batches (positions 1, 2, 4, 8, 16). Each batch is chosen to be locally stable on its own.</p>
-        <p><strong>Key property:</strong> Theoretically simpler. <em>Empirically can fail</em> at high voter dispersion &mdash; on our data, it violates stability at five prefix sizes when φ=0.9. Useful as a comparison point, not as the right answer.</p>
+        <p><strong>Key property:</strong> Theoretically simpler. <em>Empirically can fail</em> at high voter dispersion (on our data, it violates stability at five prefix sizes when φ=0.9). Useful as a comparison point, not as the right answer.</p>
     </div>
 
     <div class="info-card a3">
-        <h3><span class="algo-tag a3">A3</span> Algorithm 3 (one-at-a-time, the headline)</h3>
+        <h3><span class="algo-tag a3">A3</span> Algorithm 3 (one model at a time)</h3>
         <p><strong>How it works:</strong> Builds the leaderboard one model at a time. For each new pick, it asks: <em>"Would adding this model leave any proportionally-large sub-group of voters without a preferred option in the top-k so far?"</em> If yes, picks differently. Repeats until the leaderboard is full.</p>
-        <p><strong>Key property:</strong> No proportionally-large sub-group can complain that their favorite isn't represented. Gives every voter cluster a "voice" on the leaderboard, in proportion to its size. <em>This is the headline algorithm of the paper.</em></p>
+        <p><strong>Key property:</strong> No proportionally-large sub-group can complain that their favorite isn't represented. Gives every voter cluster a "voice" on the leaderboard, in proportion to its size. This is the paper's central ranking algorithm and the one to focus on.</p>
     </div>
 
 </div>
@@ -460,20 +460,20 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
 
 <ol>
     <li><strong>Toggle the φ button</strong> (top of the interactive section) to change how spread-out voter preferences are. Low φ = voters cluster into clear sub-groups; high φ = preferences are noisy and broad.</li>
-    <li><strong>Look at the headline metric &gamma;&#770;</strong> (gamma-hat). This is the worst-case "complaint score" &mdash; how loudly the most-shortchanged sub-group could complain. <strong>Lower &gamma;&#770; = more representative ranking.</strong> The dashed red line at &gamma;&#770; = 1 is the fairness threshold; below it means no sub-group has a valid complaint.</li>
-    <li><strong>Compare the three rankings</strong>. Models that move <span style="color: var(--a3-color);">up</span> from Bradley-Terry's order get a green badge; models that move <span style="color: var(--a2-color);">down</span> get an orange one. The <em>differences</em> are where Algorithm 3 is doing real work &mdash; surfacing models that a sub-group prefers but Bradley-Terry's average-voter view drowned out.</li>
-    <li><strong>Try this:</strong> set φ = 0.1 (cohesive sub-groups). Watch <strong>Bradley-Terry</strong> rank <code>gpt-4.1</code> at #7. Now look at <strong>Algorithm 3</strong> &mdash; <code>gpt-4.1</code> drops to #19. Why? Bradley-Terry sees its average win-rate as solid, but no sub-group of voters strongly prefers it; A3's pluralism filter catches that. Compare to <code>claude-opus-4-thinking-16k</code>, which jumps from #11 (BT) to #7 (A3) because a niche sub-group favors it strongly enough to deserve representation.</li>
+    <li><strong>Look at &gamma;&#770;</strong> (gamma-hat). This is the worst-case "complaint score" (how loudly the most-shortchanged sub-group could complain). <strong>Lower &gamma;&#770; = more representative ranking.</strong> The dashed red line at &gamma;&#770; = 1 is the fairness threshold; below it means no sub-group has a valid complaint.</li>
+    <li><strong>Compare the three rankings</strong>. Models that move <span style="color: var(--a3-color);">up</span> from Bradley-Terry's order get a green badge; models that move <span style="color: var(--a2-color);">down</span> get an orange one. The <em>differences</em> are where Algorithm 3 is doing real work (surfacing models that a sub-group prefers but Bradley-Terry's average-voter view drowned out).</li>
+    <li><strong>Try this:</strong> set φ = 0.1 (cohesive sub-groups). Watch <strong>Bradley-Terry</strong> rank <code>gpt-4.1</code> at #7. Now look at <strong>Algorithm 3</strong>. <code>gpt-4.1</code> drops to #19. Why? Bradley-Terry sees its average win-rate as solid, but no sub-group of voters strongly prefers it; A3's pluralism filter catches that. Compare to <code>claude-opus-4-thinking-16k</code>, which jumps from #11 (BT) to #7 (A3) because a niche sub-group favors it strongly enough to deserve representation.</li>
 </ol>
 
 <h2>What "Algorithm 3" Means in One Sentence</h2>
 
 <p style="background: rgba(107, 213, 163, 0.08); border-left: 3px solid var(--a3-color); padding: 1rem 1.2rem; border-radius: 4px; margin: 1rem 0;">
-<strong>Build the leaderboard so that no proportionally-large sub-group of voters can name a different model they'd rather have at any position.</strong> Not "the model the average voter likes most" &mdash; "the model the next sub-group needs represented." Repeated, top to bottom, until the leaderboard is full.
+<strong>Build the leaderboard so that no proportionally-large sub-group of voters can name a different model they'd rather have at any position.</strong> At each rank, pick the model the next under-represented sub-group needs (instead of the model the average voter likes most). Repeated, top to bottom, until the leaderboard is full.
 </p>
 
 <div class="callout">
     <strong>A note on the data:</strong>
-    The model names below (Gemini 2.5 Pro, Claude Opus 4, Sonnet 4, etc.) reflect what was on LMArena in mid-2025 &mdash; that's when the underlying dataset (<code>lmarena-ai/arena-human-preference-140k</code>) was released. LMArena hasn't published a newer general-preference dataset of comparable size, and this is the same snapshot the paper uses. The algorithmic point is independent of model freshness; the rankings would update with newer data, but the BT-vs-A3 separation pattern wouldn't. A sensitivity check on a smaller, newer slice (<code>arena-expert-5k</code>, November 2025) is in the repo if you want to verify.
+    The model names below (Gemini 2.5 Pro, Claude Opus 4, Sonnet 4, etc.) reflect what was on LMArena in mid-2025, when the underlying dataset (<code>lmarena-ai/arena-human-preference-140k</code>) was released. LMArena hasn't published a newer general-preference dataset of comparable size, and this is the same snapshot the paper uses. The algorithmic point is independent of model freshness; the rankings would update with newer data, but the BT-vs-A3 separation pattern wouldn't. A sensitivity check on a smaller, newer slice (<code>arena-expert-5k</code>, November 2025) is in the repo if you want to verify.
 </div>
 
 </section>
@@ -503,20 +503,20 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
     <span class="phi-tooltip" id="phi-tooltip">Lower &phi; = cohesive sub-groups &middot; Higher &phi; = noisier preferences</span>
 </div>
 
-<h3>Headline metric: max &gamma;&#770; (worst-case complaint score)</h3>
+<h3>Max &gamma;&#770; at the current &phi; (worst-case complaint score)</h3>
 <p class="section-help">Lower is better. <code>&gamma;&#770;</code> measures the worst-case complaint a sub-group could make about the leaderboard at the size that bothers them most. Below 1 = no sub-group has a valid complaint at any position.</p>
 <div class="metrics-grid" id="metrics-grid"></div>
 
 <h3>Stability curves</h3>
-<p class="section-help">Each line plots the complaint score at every leaderboard size from top-1 to top-19. The horizontal threshold at &gamma;&#770; = 1 is the fairness boundary; algorithms staying below it preserve representation across all leaderboard sizes. <strong>The further the green line (A3) sits below the gray line (BT), the more pluralism the algorithm is recovering.</strong></p>
+<p class="section-help">Each line plots the complaint score at every leaderboard size from top-1 to top-19. The horizontal threshold at &gamma;&#770; = 1 is the fairness boundary; algorithms staying below it preserve representation across all leaderboard sizes. The further the green line (A3) sits below the gray line (BT), the more pluralism the algorithm is recovering.</p>
 <div class="chart-wrap"><canvas id="stability-chart"></canvas></div>
 
 <h3>Top-20 rankings, side by side</h3>
-<p class="section-help">Same models, three different rankings. Rank-change badges show movement relative to Bradley-Terry. <span style="color: var(--a3-color)">Green up-arrows</span> = model moved up vs BT (a sub-group's favorite that BT missed). <span style="color: var(--a2-color)">Orange down-arrows</span> = model moved down vs BT (BT over-weighted it relative to its actual sub-group support).</p>
+<p class="section-help">Same models, three different rankings. Rank-change badges show movement relative to Bradley-Terry. <span style="color: var(--a3-color)">Green up-arrows</span> mark a model that moved up vs BT (a sub-group's favorite that BT missed). <span style="color: var(--a2-color)">Orange down-arrows</span> mark a model that moved down vs BT (BT over-weighted it relative to its actual sub-group support).</p>
 <div class="rankings-grid" id="rankings-grid"></div>
 
 <h3>Where the votes come from</h3>
-<p class="section-help">12 prompt categories from a 4-base &times; 3-difficulty flattening of LMArena's <code>category_tag</code> schema. The mixture weight is the share of votes in that category; the per-category top model is the Bradley-Terry winner restricted to that slice. <strong>Note that <code>gemini-2.5-pro</code> wins 9 of 12 categories</strong> &mdash; this is why Bradley-Terry happens to perform well at high &phi; on this snapshot, and why a more diverse dataset would surface the BT-vs-A3 gap more starkly.</p>
+<p class="section-help">12 prompt categories from a 4-base &times; 3-difficulty flattening of LMArena's <code>category_tag</code> schema. The mixture weight is the share of votes in that category; the per-category top model is the Bradley-Terry winner restricted to that slice. <strong><code>gemini-2.5-pro</code> wins 9 of 12 categories</strong> on this snapshot, which explains why Bradley-Terry performs well at high &phi; here and why a more diverse dataset would surface the BT-vs-A3 gap more starkly.</p>
 <div class="cat-table" id="cat-table"></div>
 
 </section>
@@ -528,7 +528,7 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
 
 <h2>Does This Hold on Newer Data?</h2>
 
-<p>The canonical run above uses LMArena's August 2025 dataset because it's the largest publicly-released slice and the same one Procaccia's paper uses. To check whether the algorithmic findings hold on more recent data, we re-ran the same Algorithm 1/2/3 + Bradley-Terry comparison on <a href="https://huggingface.co/datasets/lmarena-ai/arena-expert-5k">lmarena-ai/arena-expert-5k</a> &mdash; an expert-only vote slice from <strong>November 2025</strong> (smaller but newer; 605 in-slice battles after filtering, 19 active categories, no dominant faction).</p>
+<p>The canonical run above uses LMArena's August 2025 dataset because it's the largest publicly-released slice and the same one Procaccia's paper uses. To check whether the algorithmic findings hold on more recent data, we re-ran the same Algorithm 1/2/3 + Bradley-Terry comparison on <a href="https://huggingface.co/datasets/lmarena-ai/arena-expert-5k">lmarena-ai/arena-expert-5k</a> (an expert-only vote slice from <strong>November 2025</strong>: smaller but newer, with 605 in-slice battles after filtering, 19 active categories, no dominant faction).</p>
 
 <h3>Side-by-side: max &gamma;&#770; on both datasets</h3>
 
@@ -584,18 +584,18 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
 </div>
 </div>
 
-<h3>What we found &mdash; honest read</h3>
+<h3>What the side-by-side shows</h3>
 
-<p>Three observations from the side-by-side:</p>
+<p>Three observations from the comparison:</p>
 
 <ol>
-    <li><strong>Mid-&phi; (0.5): the paper's main claim replicates cleanly on both datasets.</strong> Algorithm 3 cuts max &gamma;&#770; vs Bradley-Terry by 10% on 140k and <strong>24% on the 5k slice</strong> &mdash; the regime where pluralism matters most. This is the most stable, transferable result.</li>
-    <li><strong>Low-&phi; (0.1): the pattern weakens on 5k.</strong> All three methods land within ~1% of each other on this seed (A3 = 0.704 vs BT = 0.699). A second seed (seed = 7) showed A3 winning by 13%, so the qualitative claim still holds in expectation, but not strictly per-seed. The expert-5k Mallows centers are highly heterogeneous across 19 categories, so even concentrated oracles produce a high baseline &gamma;&#770;.</li>
+    <li><strong>Mid-&phi; (0.5): the paper's main claim replicates cleanly on both datasets.</strong> Algorithm 3 cuts max &gamma;&#770; vs Bradley-Terry by 10% on 140k and <strong>24% on the 5k slice</strong>. Mid-dispersion (cohesive but overlapping sub-groups) is where pluralism matters most, and the result transfers cleanly across datasets.</li>
+    <li><strong>Low-&phi; (0.1): the pattern weakens on 5k.</strong> All three methods land within ~1% of each other on this seed (A3 = 0.704 vs BT = 0.699). A second seed (seed = 7) shows A3 winning by 13%, so the qualitative claim holds in expectation but not strictly per-seed. The expert-5k Mallows centers are highly heterogeneous across 19 categories, so even concentrated oracles produce a high baseline &gamma;&#770;.</li>
     <li><strong>High-&phi; (0.9): the pattern <em>inverts</em>.</strong> On 140k, A2 violated stability at 5 prefixes and A3 was stable. On 5k, <strong>A3 violates at 4 prefixes</strong> (max 1.17 at k=8); A2 stays stable. Confirmed across seeds. Mechanism: the 5k slice has 19 categories of comparable mass with no dominant faction (max weight 27% on "software"); 140k had <code>gemini-2.5-pro</code> winning 9 of 12 categories. Algorithm 3's single-addition decomposition cannot satisfy 19 high-dispersion factions for small <em>k</em>; Algorithm 2's geometric checkpoints reset the lottery and recover.</li>
 </ol>
 
 <div class="callout">
-<strong>The honest takeaway:</strong> Algorithm 3 reliably dominates Bradley-Terry in the <strong>mid-dispersion regime</strong> &mdash; where the paper's central claim sits and where most real LMArena-style preference data falls. At low and high dispersion, empirical performance depends on the underlying user-distribution structure: <em>whether there's a dominant faction (favors A3) or many comparable-mass factions (favors A2).</em> This is a research conversation, not a failure: the headline guarantee for A3 is theoretical; empirical max &gamma;&#770; varies with the oracle's structure. Worth flagging in any joint write-up &mdash; the data is in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/results-expert-5k.json"><code>results/results-expert-5k.json</code></a> and the discussion in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/run_log.md"><code>run_log.md</code></a>.
+Algorithm 3 reliably dominates Bradley-Terry in the <strong>mid-dispersion regime</strong>, where the paper's central claim sits and where most real LMArena-style preference data falls. At low and high dispersion, empirical performance depends on the underlying user-distribution structure: whether there's a dominant faction (favors A3) or many comparable-mass factions (favors A2). The theoretical A3 guarantee remains; empirical max &gamma;&#770; varies with the oracle's structure. Worth flagging in any joint write-up: the data sits in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/results-expert-5k.json"><code>results/results-expert-5k.json</code></a> and the discussion in <a href="https://github.com/kvr06-ai/pluralistic-leaderboards/blob/main/results/run_log.md"><code>run_log.md</code></a>.
 </div>
 
 </section>
@@ -607,14 +607,14 @@ Apache-2.0 &middot; Independent project; not officially affiliated with the pape
 
 <h2>Why This Matters Beyond LMArena</h2>
 
-<p>Leaderboards are not just bragging rights. <strong>RLHF training data</strong> &mdash; the human preferences that shape every modern AI model &mdash; flows through the same kind of aggregation. If Bradley-Terry suppresses minority preferences in evaluation, it suppresses them in training too. The result is models that are quietly miscalibrated for entire user populations.</p>
+<p>Leaderboards shape AI training data. <strong>RLHF</strong> (the human-feedback loop that fine-tunes every modern model) flows through the same kind of preference aggregation. If Bradley-Terry suppresses minority preferences in evaluation, it suppresses them in training too. The result is models that are quietly miscalibrated for entire user populations.</p>
 
 <p>Procaccia's group calls this <strong>mechanism alignment</strong>: aligning the AI's training and evaluation mechanisms with the actual diversity of human preferences, instead of an averaged-out fiction. Pluralistic Leaderboards is one piece of a three-paper 2026 program from his lab on this question:</p>
 
 <ul>
-    <li><strong>Pluralistic Leaderboards</strong> (this artifact) &mdash; how to <em>aggregate</em> preferences fairly</li>
-    <li><strong><a href="https://arxiv.org/abs/2602.21297">Robust AI Evaluation through Maximal Lotteries</a></strong> &mdash; how to <em>evaluate</em> AI systems robustly under preference heterogeneity</li>
-    <li><strong><a href="https://arxiv.org/abs/2602.01002">How RLHF Amplifies Sycophancy</a></strong> &mdash; how Bradley-Terry's misspecification <em>propagates into RLHF</em>, producing sycophantic models</li>
+    <li><strong>Pluralistic Leaderboards</strong> (this artifact): how to <em>aggregate</em> preferences fairly</li>
+    <li><strong><a href="https://arxiv.org/abs/2602.21297">Robust AI Evaluation through Maximal Lotteries</a></strong>: how to <em>evaluate</em> AI systems robustly under preference heterogeneity</li>
+    <li><strong><a href="https://arxiv.org/abs/2602.01002">How RLHF Amplifies Sycophancy</a></strong>: how Bradley-Terry's misspecification <em>propagates into RLHF</em>, producing sycophantic models</li>
 </ul>
 
 <p>All three argue the same thing from different angles: <strong>the standard aggregation method (Bradley-Terry) is a load-bearing failure mode in modern AI evaluation and alignment, and social-choice theory provides the principled fix.</strong></p>
@@ -653,9 +653,9 @@ const GRID_COLOR = getComputedStyle(document.documentElement).getPropertyValue('
 const THRESHOLD_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--threshold').trim();
 
 const PHI_DESCRIPTIONS = {
-    0.1: 'cohesive sub-groups &mdash; pluralism matters most here',
-    0.5: 'moderate dispersion &mdash; mixed sub-groups',
-    0.9: 'high noise &mdash; voter preferences spread broadly'
+    0.1: 'cohesive sub-groups (pluralism matters most here)',
+    0.5: 'moderate dispersion (mixed sub-groups)',
+    0.9: 'high noise (voter preferences spread broadly)'
 };
 
 let currentPhi = 0.1;
