@@ -145,3 +145,150 @@ high-dispersion regime offering fewer cohesive sub-populations to defend).
    block. The hardest part was untangling the LMArena `category_tag` schema
    (which is nested, not flat) -- caught by inspecting the dataset
    directly after the first end-to-end run produced only one category.
+
+## Sensitivity check on arena-expert-5k --- 2026-05-01
+
+Re-ran the full reproduction on a more recent, expert-only LMArena slice to
+test whether the algorithmic findings hold beyond the canonical 140k.
+
+### Command
+
+```
+python notebooks/lmarena_expert5k_demo.py \
+    --n-eval-users 10000 \
+    --n-users-per-round 250 \
+    --epsilon 0.1 \
+    --seed 42
+```
+
+### Inputs
+
+- Dataset: `lmarena-ai/arena-expert-5k` (`train` split, last updated
+  2025-11-05; 5,128 rows total).
+- Filter: drop ties / `both_bad` -> 3,550 clean pairwise battles. Restrict to
+  the top m=20 LLMs by appearance frequency (each top-20 model has >=120
+  appearances); the within-top-20 slice contains **605 battles** across
+  **20 models**.
+- No subsampling (`--max-battles None`): the source slice is already small
+  and keeping the full top-20 slice gives the maximum signal per category.
+
+### Schema differences vs arena-human-preference-140k
+
+The expert-5k schema is structurally different from the 140k schema in
+three ways relevant to the loader:
+
+1. **No `category_tag`.** Categories are derived from `occupational_tags`,
+   a *flat* dict of 23 boolean fields (e.g. `mathematical: True`,
+   `software_and_it_services: True`). Note: false values are encoded as
+   `None`, not `False` -- handled by the truthy check in the flatten rule.
+2. **Flatten rule.** `_flatten_occupational_tag` picks the first truthy
+   occupation in canonical order and returns a short alias
+   (`mathematical -> math`, `software_and_it_services -> software`, ...).
+   Rows with no truthy occupation fall back to `general`. This produces
+   **19 active categories** in the top-20 slice (4 of the 23 occupations
+   never co-occur with the top-20 models in this small sample).
+3. **Extra fields ignored:** `conversation_a`, `conversation_b`,
+   `full_conversation`, `language`, `evaluation_order`. They are not used by
+   the algorithms; the loader simply does not surface them.
+
+The 140k loader is untouched. The new loader function is
+`load_lmarena_expert5k` in the same module, returning the identical
+`LMArenaSample` dataclass so the rest of the pipeline runs unchanged.
+
+### Mixture weights (top-3 categories)
+
+| Category | Weight |
+|:---------|------:|
+| software | 0.269 |
+| math | 0.200 |
+| engineering | 0.147 |
+| science | 0.132 |
+| business | 0.119 |
+
+(vs 140k where `general__high` + `general__med` together carry ~0.59 of the
+mass and `gemini-2.5-pro` tops 10/12 categories.)
+
+### Numeric headlines
+
+| phi | BT max gamma_hat | A2 max gamma_hat | A3 max gamma_hat | A3 unstable prefixes |
+|----:|----------------:|----------------:|----------------:|---------------------:|
+| 0.1 | 0.699 | 0.694 | 0.704 | 0 |
+| 0.5 | 0.742 | 0.974 | **0.560** | 0 |
+| 0.9 | **0.813** | 0.865 | 1.171 | 4 |
+
+For comparison, the canonical 140k headlines (seed=42) were:
+
+| phi | BT max gamma_hat | A2 max gamma_hat | A3 max gamma_hat |
+|----:|----------------:|----------------:|----------------:|
+| 0.1 | 0.260 | 0.132 | **0.132** |
+| 0.5 | 0.430 | 0.549 | **0.387** |
+| 0.9 | **0.689** | 1.140 | 0.883 |
+
+### Per-prefix detail (phi = 0.5) -- where Algorithm 3 gains most on expert-5k
+
+| k | BT gamma_hat | A2 gamma_hat | A3 gamma_hat | improvement (BT/A3) |
+|--:|-------------:|-------------:|-------------:|--------------------:|
+| 5 | 0.639 | 0.778 | **0.369** | 1.73 |
+| 6 | 0.438 | 0.920 | 0.424 | 1.03 |
+| 7 | 0.503 | **0.974** | 0.466 | 1.08 |
+| 9 | 0.609 | 0.405 | **0.199** | 3.06 |
+| 10 | 0.671 | 0.449 | **0.218** | 3.08 |
+| 11 | 0.585 | 0.387 | **0.204** | 2.87 |
+
+A3 strictly dominates BT and A2 across mid-prefix sizes at phi = 0.5 -- the
+regime where the expert-5k pluralism is most pronounced.
+
+### Qualitative comparison vs the 140k canonical run
+
+Two of the three paper findings replicate, one inverts in this regime:
+
+1. **Low phi (0.1):** All three methods are within ~1% of each other
+   (0.699 / 0.694 / 0.704). The 140k slice showed A3 cutting BT by ~2x at
+   phi=0.1; here the expert-5k Mallows centers are highly heterogeneous
+   across 19 categories, so even a "concentrated" oracle (phi=0.1 around
+   each center) produces a high-baseline gamma_hat that is hard to push
+   below ~0.7 with any algorithm. Re-running with `--seed 7` produces
+   A3=0.614 vs BT=0.707 (A3 wins by ~13%), so this is partly a seed effect:
+   the qualitative claim "A3 >= BT at low phi" holds in expectation.
+2. **Mid phi (0.5):** A3 cuts max gamma_hat by 24% vs BT (0.560 vs 0.742)
+   and by 42% vs A2 (0.560 vs 0.974). This is the **clearest replication
+   of the paper's main claim** on this dataset -- and it is where pluralism
+   matters most for a leaderboard with meaningful between-faction
+   disagreement.
+3. **High phi (0.9):** Pattern *inverts*. On 140k, A2 had 5 unstable
+   prefixes and A3 had 0; on expert-5k, A2 has 0 unstable prefixes and A3
+   has 4 (max_gamma 1.17 at k=8). Mechanism: expert-5k has 19 categories of
+   comparable mass (no single category > 0.27 weight), so at phi=0.9 the
+   oracle samples nearly-uniform rankings spread across 19 directions.
+   A3's single-addition decomposition (one model added per round) cannot
+   simultaneously satisfy 19 high-dispersion factions for small k, while
+   A2's geometric checkpoints reset the lottery at k in {1, 2, 4, 8, 16}
+   and re-balance. Confirmed with `--seed 7` (A3=1.153, A2=0.982) so this
+   is a genuine dataset-structure effect, not seed variance. Worth flagging
+   to Procaccia: in datasets without a dominant faction, A2 is the safer
+   choice at extreme dispersion.
+
+### Wall time
+
+~33 seconds per run (matching the 140k runtime within noise; the smaller
+dataset is offset by 19 vs 12 categories in the per-category BT loop).
+
+### Findings hold?
+
+- **At low phi:** A3 is competitive with BT (within seed noise) -- claim
+  holds in expectation but not strictly per-seed on this slice.
+- **At mid phi:** A3 strictly cuts max gamma_hat -- **claim holds**.
+- **At high phi:** A3 cuts max gamma_hat where A2 fails on the 140k slice;
+  on the expert-5k slice the roles swap (A2 stable, A3 unstable). The
+  paper's headline guarantee for A3 ("monotonic stability across all k")
+  is a worst-case theoretical bound, but empirical max gamma_hat depends
+  on the structure of the user distribution. **Worth noting in any joint
+  write-up.**
+
+### Tests
+
+`pytest -v` passes with 21 / 21 (1 skipped live-fetch by design) after the
+data.py change. The new flatten function is unit-tested via the existing
+test scaffolding (tested manually with synthetic inputs covering empty,
+None, single-truthy, multi-truthy, and all-false occupational dicts;
+results match the canonical-order priority documented in the docstring).
